@@ -3,8 +3,10 @@ let palette;
 let cellSize = 20;
 let tapeLenght = 18;
 let tape = [0, 1, 0, 1, 0, 0, 1, 1, 0, 1, 0, 1, 0, 0, 1, 1, 0, 1];
+let states = [0, 1]
 let generationCount = 20;
 let generations = [];
+let input;
 
 function setup() {
   const canvas = createCanvas(800, 800);
@@ -15,14 +17,14 @@ function setup() {
 }
 
 function draw() {
-  generations = calculate()
+  clear()
+  generations = []
+  generations = calculate(tape, states, generations, generationCount)
   for (var t = 0; t < generationCount; t++) {
     for (var i = 0; i < tapeLenght; i++) {
-      console.log(generations)
       drawCell(generations[t][i],cellSize+i*cellSize*2, cellSize+cellSize*t*2, cellSize, color(255, 204, 0, 255));
     }
   }
-  generations = []
 }
 
 function calculate(D,k,G,t,F = null){
@@ -31,16 +33,20 @@ function calculate(D,k,G,t,F = null){
   // G - wszystkie dotychczasowe stany taśmy (generacje)
   // t - aktualy czas (numer przejścia)
   // F - funkcja wyliczająca nowy stan
-  if (F === null) return standardCalucation(D,k);
+  if (F === null) return standardCalucation(D,k,G,t);
   var customFunction = new Function("D", "k", "G", "t", F);
   return customFunction(D,k,G,t);
 }
 
-function standardCalucation(D,k){
-  return cellularAutomaton(110, tape,generationCount);
+function standardCalucation(D,k,G,t){
+  let value = +input.value();
+  return cellularAutomaton(value, D, t);
 }
+
 function cellularAutomaton(rule, initialState, generations) {
+  console.log(rule)
   let automaton = [initialState.slice()];
+  console.log(automaton)
   for (let gen = 0; gen < generations; gen++) {
       let currentState = automaton[gen];
       let newState = [];
@@ -68,6 +74,6 @@ function drawCell(v, x, y, size, color){
   if (v > 0){
     rectMode(CENTER);
     fill(color);
-    rect(x, y, size*1.5, size*1.5);
+    rect(x, y, size * 1.5, size * 1.5);
   }
 }
