@@ -12,8 +12,7 @@ function setup() {
   const canvas = createCanvas(800, 800);
   canvas.parent('automata');
   strokeColor = color(0, 0, 0, 255);
-  input = createInput('');
-  input.position(0, 100);
+  input = select('#rule');
 }
 
 function draw() {
@@ -44,9 +43,7 @@ function standardCalucation(D,k,G,t){
 }
 
 function cellularAutomaton(rule, initialState, generations) {
-  console.log(rule)
   let automaton = [initialState.slice()];
-  console.log(automaton)
   for (let gen = 0; gen < generations; gen++) {
       let currentState = automaton[gen];
       let newState = [];
