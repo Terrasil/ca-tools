@@ -1,5 +1,3 @@
-import './assets/main.css'
-
 import { createApp } from 'vue'
 import App from './App.vue'
 import router from './router'
@@ -9,6 +7,7 @@ import 'primeflex/primeflex.css'
 import 'primevue/resources/themes/aura-light-blue/theme.css'
 import 'primevue/resources/primevue.min.css'
 import 'primeicons/primeicons.css'
+import './assets/main.css'
 
 import AnimateOnScroll from 'primevue/animateonscroll'
 import BadgeDirective from 'primevue/badgedirective'
@@ -23,7 +22,6 @@ import Tooltip from 'primevue/tooltip'
 const app = createApp(App)
 
 app.use(router)
-
 app.use(PrimeVue, { ripple: true })
 app.use(ConfirmationService)
 app.use(ToastService)
