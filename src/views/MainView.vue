@@ -323,7 +323,10 @@ onBeforeMount(() => {
         cols = Object.keys(p5.start).length
         p5.windowResized()
       }
-      if (rows != p5.iterations) rows = p5.iterations
+      if (rows != p5.iterations) {
+        rows = p5.iterations
+        p5.windowResized()
+      }
       grid[0] = Object.values(p5.start)
       for (let i = 1; i < rows; i++) {
         grid[i] = Array(cols).fill(0)
