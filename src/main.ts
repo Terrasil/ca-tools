@@ -8,6 +8,7 @@ import 'primevue/resources/themes/aura-light-blue/theme.css'
 import 'primevue/resources/primevue.min.css'
 import 'primeicons/primeicons.css'
 import './assets/main.css'
+import './assets/flags.css'
 
 import AnimateOnScroll from 'primevue/animateonscroll'
 import BadgeDirective from 'primevue/badgedirective'

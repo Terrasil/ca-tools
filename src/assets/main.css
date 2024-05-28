@@ -1,3 +1,33 @@
+/* ug palette */
 :root {
   --primary-color: #052d73;
+}
+
+/* scrollbar styles */
+::-webkit-scrollbar {
+  width: 0.75rem;
+  height: 0.75rem;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--surface-0);
+  border-left: none;
+  border-radius: 0.75rem;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--surface-200);
+  border-radius: 0.75rem;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--surface-300);
+}
+
+::-webkit-scrollbar-thumb:active {
+  background: var(--surface-400);
+}
+
+::-webkit-scrollbar-corner {
+  background: var(--surface-0);
 }
