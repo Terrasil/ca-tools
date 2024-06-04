@@ -285,7 +285,11 @@ onBeforeMount(() => {
       //draw neighbors
       for (let y = 0; y < rows; y++) {
         for (let x = 0; x < spacingCells; x++) {
-          let colorValue = 255 - (grid[y][cols - spacingCells + x] / (p5.states - 1)) * 255
+          let colorValue = 0
+          if (p5.edge === 0)
+            colorValue = 255 - (grid[y][cols - spacingCells + x] / (p5.states - 1)) * 255
+          if (p5.edge === 1) colorValue = 255 - (grid[y][spacingCells - x] / (p5.states - 1)) * 255
+          if (p5.edge === 2) colorValue = 255 - (p5.edgeValue / (p5.states - 1)) * 255
           p5.fill(colorValue / 2)
           p5.stroke(0)
           p5.rect(x * cellSize, y * cellSize, cellSize, cellSize)
@@ -293,7 +297,10 @@ onBeforeMount(() => {
       }
       for (let y = 0; y < rows; y++) {
         for (let x = 0; x < spacingCells; x++) {
-          let colorValue = 255 - (grid[y][x] / (p5.states - 1)) * 255
+          let colorValue = 0
+          if (p5.edge === 0) colorValue = 255 - (grid[y][x] / (p5.states - 1)) * 255
+          if (p5.edge === 1) colorValue = 255 - (grid[y][cols - x - 1] / (p5.states - 1)) * 255
+          if (p5.edge === 2) colorValue = 255 - (p5.edgeValue / (p5.states - 1)) * 255
           p5.fill(colorValue / 2)
           p5.stroke(0)
           p5.rect((cols + spacingCells + x) * cellSize, y * cellSize, cellSize, cellSize)
