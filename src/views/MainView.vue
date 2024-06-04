@@ -2,7 +2,7 @@
   <div class="card flex justify-content-center">
     <div class="flex flex-column gap-2">
       <div class="card flex gap-2 p-fluid">
-        <div>
+        <div class="w-10rem">
           <label for="numberInput"><b>Ilość komórek</b></label>
           <InputNumber
             id="numberInput"
@@ -14,7 +14,7 @@
             @input="onValueChanged"
           />
         </div>
-        <div>
+        <div class="w-10rem">
           <label for="iterationInput"><b>Ilość iteracji</b></label>
           <InputNumber
             id="iterationInput"
@@ -25,7 +25,18 @@
             :min="0"
           />
         </div>
-        <Button icon="pi pi-cog" severity="secondary" aria-label="Options" outlined />
+        <div class="w-10rem">
+          <label for="statesInput"><b>Ilość stanów</b></label>
+          <InputNumber
+            id="statesInput"
+            mode="decimal"
+            :allowEmpty="false"
+            v-model="statesValue"
+            showButtons
+            :min="2"
+          />
+        </div>
+        <!--<Button icon="pi pi-cog" severity="secondary" aria-label="Options" outlined />-->
         <Button icon="pi pi-upload" severity="secondary" outlined />
         <Button icon="pi pi-download" severity="secondary" outlined />
         <Dropdown v-model="selectedCountry" :options="countries" optionLabel="name" class="w-1 p-1">
@@ -69,7 +80,7 @@
                 showButtons
                 :allowEmpty="false"
                 :min="0"
-                :max="255"
+                :max="calculatePossibleAutomata(statesValue)"
                 :inputId="`input-all`"
                 @input="changeAllRules"
               />
@@ -80,7 +91,7 @@
                 showButtons
                 :allowEmpty="false"
                 :min="0"
-                :max="1"
+                :max="statesValue - 1"
                 :inputId="`input-all`"
                 @input="changeAllStates"
               />
@@ -98,7 +109,7 @@
                   showButtons
                   :allowEmpty="false"
                   :min="0"
-                  :max="255"
+                  :max="calculatePossibleAutomata(statesValue)"
                   :inputId="`input-${i}`"
                 />
                 <InputNumber
@@ -108,7 +119,7 @@
                   showButtons
                   :allowEmpty="false"
                   :min="0"
-                  :max="1"
+                  :max="statesValue - 1"
                   :inputId="`input-${i}`"
                 />
               </div>
@@ -116,11 +127,22 @@
           </div>
         </Fieldset>
         <Fieldset legend="Własności">
-          <span class="text-red-400"><i class="pi pi-check mr-1"></i>Zachowywanie sumy</span><br />
-          <span class="text-red-400"><i class="pi pi-check mr-1"></i>Stabilny</span><br />
-          <span class="text-red-400"><i class="pi pi-check mr-1"></i>Cykliczny</span><br />
-          <span class="text-red-400"><i class="pi pi-check mr-1"></i>Odwracalny</span><br />
-          <span class="text-red-400"><i class="pi pi-check mr-1"></i>Chaotyczny</span>
+          <span :class="wlasnosci.zachowanieSumy ? 'text-green-400' : 'text-red-400'"
+            ><i class="pi mr-1" :class="wlasnosci.zachowanieSumy ? 'pi-check' : 'pi-times'"></i
+            >Zachowywanie sumy</span
+          ><br />
+          <span :class="wlasnosci.odwracalnosc ? 'text-green-400' : 'text-red-400'"
+            ><i class="pi mr-1" :class="wlasnosci.odwracalnosc ? 'pi-check' : 'pi-times'"></i
+            >Odwracalny</span
+          ><br />
+          <span :class="wlasnosci.replikacja ? 'text-green-400' : 'text-red-400'"
+            ><i class="pi mr-1" :class="wlasnosci.replikacja ? 'pi-check' : 'pi-times'"></i
+            >Replikujący</span
+          ><br />
+          <span :class="wlasnosci.okresowosc ? 'text-green-400' : 'text-red-400'"
+            ><i class="pi mr-1" :class="wlasnosci.okresowosc ? 'pi-check' : 'pi-times'"></i
+            >Cykliczny</span
+          >
         </Fieldset>
       </div>
       <Splitter>
@@ -147,10 +169,18 @@ import p5 from 'p5'
 
 const numberValue = ref(8)
 const iterationValue = ref(10)
+const statesValue = ref(2)
 const allRule = ref(0)
 const allState = ref(0)
 const ruleInputs = ref<{ [key: number]: number }>({})
 const startValueInputs = ref<{ [key: number]: number }>({})
+
+const wlasnosci = ref({
+  zachowanieSumy: false,
+  odwracalnosc: false,
+  replikacja: false,
+  okresowosc: false
+})
 
 const selectedCountry = ref({ name: 'Polski', code: 'PL' })
 const countries = ref([
@@ -177,6 +207,12 @@ const onValueChanged = (event: { value: number }) => {
   }
 }
 
+function calculatePossibleAutomata(states: number) {
+  const possibleNeighborhoods = Math.pow(states, 3)
+  const possibleAutomata = Math.pow(states, possibleNeighborhoods)
+  return possibleAutomata
+}
+
 const changeAllRules = (event: { value: number }) => {
   for (let i = 0; i < numberValue.value; i++) {
     ruleInputs.value[i] = event.value
@@ -189,71 +225,6 @@ const changeAllStates = (event: { value: number }) => {
   }
 }
 
-// Funkcja badająca zachowanie sumy stanów
-function sprawdzanieSumyStanow(symulacja: string | any[]) {
-  let sumaPoczatkowa = symulacja[0].reduce((a: any, b: any) => a + b, 0)
-  for (let t = 0; t < symulacja.length; t++) {
-    let sumaObecna = symulacja[t].reduce((a: any, b: any) => a + b, 0)
-    if (sumaObecna !== sumaPoczatkowa) {
-      return false
-    }
-  }
-  return true
-}
-// Funkcja badająca stabilność
-function sprawdzanieStabilnosci(symulacja: string | any[]) {
-  for (let t = 0; t < symulacja.length - 1; t++) {
-    if (
-      !symulacja[t].every((val: any, index: string | number) => val === symulacja[t + 1][index])
-    ) {
-      return false
-    }
-  }
-  return true
-}
-// Funkcja badająca okresowość
-function sprawdzanieOkresowosci(symulacja: string | any[]) {
-  for (let t1 = 0; t1 < symulacja.length - 1; t1++) {
-    for (let t2 = t1 + 1; t2 < symulacja.length; t2++) {
-      if (symulacja[t1].every((val: any, index: string | number) => val === symulacja[t2][index])) {
-        let okres = t2 - t1
-        for (let k = t2; k < symulacja.length; k++) {
-          if (
-            !symulacja[k].every(
-              (val: any, index: string | number) => val === symulacja[k - okres][index]
-            )
-          ) {
-            return false
-          }
-        }
-        return true
-      }
-    }
-  }
-  return false
-}
-// Funkcja badająca odwracalność
-function sprawdzanieOdwracalnosci(symulacja: string | any[]) {
-  for (let t = 1; t < symulacja.length; t++) {
-    let poprzednieStany = new Set(symulacja[t - 1])
-    if (poprzednieStany.size > 1) {
-      return false
-    }
-  }
-  return true
-}
-// Funkcja badająca chaotyczność
-function sprawdzanieChaotycznosci(symulacja: string | any[], threshold: number) {
-  for (let t = 0; t < symulacja.length - 1; t++) {
-    for (let i = 0; i < symulacja[t].length; i++) {
-      if (Math.abs(symulacja[t][i] - symulacja[t + 1][i]) > threshold) {
-        return true
-      }
-    }
-  }
-  return false
-}
-
 onBeforeMount(() => {
   for (let i = 0; i < numberValue.value; i++) {
     ruleInputs.value[i] = 0
@@ -264,10 +235,8 @@ onBeforeMount(() => {
     //outside variables
     p5.rules = {}
     p5.start = {}
+    p5.states = null
     p5.iterations = null
-
-    //output variables
-    p5.symulation = {}
 
     let cols = Object.keys(p5.start).length
     let rows = p5.iterations
@@ -277,11 +246,8 @@ onBeforeMount(() => {
       let cellSize = p5.width / cols
       for (let y = 0; y < rows; y++) {
         for (let x = 0; x < cols; x++) {
-          if (grid[y][x] === 1) {
-            p5.fill(0)
-          } else {
-            p5.fill(255)
-          }
+          let colorValue = 255 - (grid[y][x] / (p5.states - 1)) * 255
+          p5.fill(colorValue)
           p5.stroke(0)
           p5.rect(x * cellSize, y * cellSize, cellSize, cellSize)
         }
@@ -289,8 +255,8 @@ onBeforeMount(() => {
     }
 
     function generateRule(ruleNumber: { toString: (arg0: number) => string }) {
-      let binaryString = ruleNumber.toString(2).padStart(8, '0')
-      return binaryString.split('').map(Number).reverse()
+      let baseString = ruleNumber.toString(p5.states).padStart(Math.pow(p5.states, 3), '0')
+      return baseString.split('').map(Number).reverse()
     }
 
     function generateNextState() {
@@ -299,7 +265,7 @@ onBeforeMount(() => {
           let left = grid[y - 1][(x - 1 + cols) % cols]
           let center = grid[y - 1][x]
           let right = grid[y - 1][(x + 1) % cols]
-          let index = (left << 2) | (center << 1) | right
+          let index = left * p5.states * p5.states + center * p5.states + right
 
           let ruleNumber = p5.rules[x]
           let cellRules = generateRule(ruleNumber)
@@ -307,6 +273,216 @@ onBeforeMount(() => {
           grid[y][x] = cellRules[index]
         }
       }
+    }
+
+    function checkNumberConservation(
+      f: (left: number, center: number, right: number) => number,
+      S: number | null,
+      testConfigurations: number[][]
+    ) {
+      function sum(arr: number[]) {
+        return arr.reduce((a, b) => a + b, 0)
+      }
+
+      for (const x of testConfigurations) {
+        const sumBefore = sum(x)
+        const xNew: number[] = []
+        for (let i = 0; i < x.length; i++) {
+          const left = i > 0 ? x[i - 1] : 0
+          const center = x[i]
+          const right = i < x.length - 1 ? x[i + 1] : 0
+          const newState = f(left, center, right)
+          xNew.push(newState)
+        }
+        const sumAfter = sum(xNew)
+        if (sumBefore !== sumAfter) {
+          return false
+        }
+      }
+      return true
+    }
+
+    function checkReversibility(
+      F: (left: number, center: number, right: number) => number,
+      S: number | null,
+      testConfigurations: number[][]
+    ): [boolean, Map<any, any> | null] {
+      function generateRightGraph(
+        F: (left: number, center: number, right: number) => number,
+        S: number | null
+      ) {
+        const graph = new Map()
+
+        function addEdge(u: any, y: number) {
+          const v = F(u[0], u[1], y)
+          if (!graph.has(u)) {
+            graph.set(u, [])
+          }
+          graph.get(u).push(v)
+        }
+
+        const initial = F(0, 0, 0)
+        const nodes = [initial]
+        graph.set(initial, [])
+
+        while (nodes.length > 0) {
+          const u = nodes.pop()!
+          for (let y = 0; y < (S || 10); y++) {
+            const v = F(u[0], u[1], y)
+            if (!graph.has(v)) {
+              graph.set(v, [])
+              nodes.push(v)
+            }
+            addEdge(u, y)
+          }
+        }
+
+        return graph
+      }
+
+      function constructInverseFunction(graph: Map<any, any[]>) {
+        const F_inv = new Map()
+        for (const [u, neighbors] of graph.entries()) {
+          for (const v of neighbors) {
+            if (!F_inv.has(v)) {
+              F_inv.set(v, [])
+            }
+            F_inv.get(v).push(u)
+          }
+        }
+        return F_inv
+      }
+
+      function isStronglyConnected(graph: Map<any, any[]>) {
+        function dfs(graph: Map<any, any[]>, node: any, visited: Set<any>) {
+          visited.add(node)
+          for (let neighbor of graph.get(node) || []) {
+            if (!visited.has(neighbor)) {
+              dfs(graph, neighbor, visited)
+            }
+          }
+        }
+
+        const nodes = Array.from(graph.keys())
+        const visited = new Set()
+        dfs(graph, nodes[0], visited)
+
+        if (visited.size !== nodes.length) {
+          return false
+        }
+
+        const transposedGraph = new Map()
+        for (let [node, neighbors] of graph.entries()) {
+          for (let neighbor of neighbors) {
+            if (!transposedGraph.has(neighbor)) {
+              transposedGraph.set(neighbor, [])
+            }
+            transposedGraph.get(neighbor).push(node)
+          }
+        }
+
+        const transposedVisited = new Set()
+        dfs(transposedGraph, nodes[0], transposedVisited)
+
+        return transposedVisited.size === nodes.length
+      }
+
+      const graph = generateRightGraph(F, S)
+      if (isStronglyConnected(graph)) {
+        const F_inv = constructInverseFunction(graph)
+        for (const x of testConfigurations) {
+          const xNew = F(x[0], x[1], x[2])
+          const xRestored = F_inv.get(xNew)
+          if (!xRestored || JSON.stringify(x) !== JSON.stringify(xRestored[0])) {
+            return [false, null]
+          }
+        }
+        return [true, F_inv]
+      }
+      return [false, null]
+    }
+
+    function checkReplication(
+      K: (left: number, center: number, right: number) => number,
+      n0: number,
+      testConfigurations: number[][]
+    ) {
+      function updateConfiguration(
+        x: number[],
+        K: (left: number, center: number, right: number) => number
+      ) {
+        const xNew: number[] = []
+        for (let i = 0; i < x.length; i++) {
+          const left = i > 0 ? x[i - 1] : 0
+          const center = x[i]
+          const right = i < x.length - 1 ? x[i + 1] : 0
+          const newState = K(left, center, right)
+          xNew.push(newState)
+        }
+        return xNew
+      }
+
+      function isReplicator(initialConfig: number[], currentConfig: number[]) {
+        const initialString = initialConfig.join('')
+        const currentString = currentConfig.join('')
+        return currentString.includes(initialString + initialString)
+      }
+
+      for (const x of testConfigurations) {
+        let currentConfig = x
+        for (let t = 1; t <= n0; t++) {
+          currentConfig = updateConfiguration(currentConfig, K)
+        }
+        if (isReplicator(x, currentConfig)) {
+          return true
+        }
+      }
+      return false
+    }
+
+    function checkPeriodicity(
+      f: (left: number, center: number, right: number) => number,
+      n0: number,
+      testConfigurations: number[][]
+    ) {
+      function updateConfiguration(
+        x: number[],
+        f: (left: number, center: number, right: number) => number
+      ) {
+        const xNew: number[] = []
+        for (let i = 0; i < x.length; i++) {
+          const left = i > 0 ? x[i - 1] : 0
+          const center = x[i]
+          const right = i < x.length - 1 ? x[i + 1] : 0
+          const newState = f(left, center, right)
+          xNew.push(newState)
+        }
+        return xNew
+      }
+
+      for (const x of testConfigurations) {
+        const initialConfig = x
+        let currentConfig = x
+        for (let t = 1; t <= n0; t++) {
+          currentConfig = updateConfiguration(currentConfig, f)
+          if (JSON.stringify(currentConfig) === JSON.stringify(initialConfig)) {
+            return true
+          }
+        }
+      }
+      return false
+    }
+
+    function tests() {
+      const f = (left: number, center: number, right: number) =>
+        p5.rules[`${left}${center}${right}`] || 0
+      const S = p5.states
+      const testConfigurations = [Object.values(p5.start) as number[]]
+
+      wlasnosci.value.zachowanieSumy = checkNumberConservation(f, S, testConfigurations)
+      wlasnosci.value.odwracalnosc = checkReversibility(f, S, testConfigurations)[0] ?? undefined
+      wlasnosci.value.replikacja = checkReplication(f, p5.iterations, testConfigurations)
+      wlasnosci.value.okresowosc = checkPeriodicity(f, p5.iterations, testConfigurations)
     }
 
     p5.setup = () => {
@@ -334,6 +510,7 @@ onBeforeMount(() => {
       p5.background(255)
       generateNextState()
       drawGrid()
+      tests()
     }
 
     p5.windowResized = () => {
@@ -346,6 +523,7 @@ onBeforeMount(() => {
 
   p5Instance = new p5(script)
   p5Instance.iterations = iterationValue.value
+  p5Instance.states = statesValue.value
 })
 
 watch(
@@ -366,6 +544,13 @@ watch(
   iterationValue,
   (newIterationValue) => {
     if (p5Instance) p5Instance.iterations = toRaw(newIterationValue)
+  },
+  { deep: true }
+)
+watch(
+  statesValue,
+  (newStatesValue) => {
+    if (p5Instance) p5Instance.states = toRaw(newStatesValue)
   },
   { deep: true }
 )
