@@ -36,6 +36,30 @@
             :min="2"
           />
         </div>
+        <div class="w-10rem">
+          <label for="edgeTypeInput"><b>Typ warunku brzegowego</b></label>
+          <InputNumber
+            id="edgeTypeInput"
+            mode="decimal"
+            :allowEmpty="false"
+            v-model="edgeTypeValue"
+            showButtons
+            :min="0"
+            :max="2"
+          />
+        </div>
+        <div class="w-10rem" v-if="edgeTypeValue === 2">
+          <label for="edgeValueInput"><b>Wartość wypełnienia</b></label>
+          <InputNumber
+            id="edgeValueInput"
+            mode="decimal"
+            :allowEmpty="false"
+            v-model="edgeValue"
+            showButtons
+            :min="0"
+            :max="statesValue - 1"
+          />
+        </div>
         <!--<Button icon="pi pi-cog" severity="secondary" aria-label="Options" outlined />-->
         <Button icon="pi pi-upload" severity="secondary" outlined />
         <Button icon="pi pi-download" severity="secondary" outlined />
@@ -170,6 +194,8 @@ import p5 from 'p5'
 const numberValue = ref(8)
 const iterationValue = ref(10)
 const statesValue = ref(2)
+const edgeTypeValue = ref(0)
+const edgeValue = ref(0)
 const allRule = ref(0)
 const allState = ref(0)
 const ruleInputs = ref<{ [key: number]: number }>({})
@@ -236,6 +262,8 @@ onBeforeMount(() => {
     p5.rules = {}
     p5.start = {}
     p5.states = null
+    p5.edge = 2 // 0 - periodic, 1 - mirror, 2 - filled by edgeValue
+    p5.edgeValue = 1
     p5.iterations = null
 
     let cols = Object.keys(p5.start).length
@@ -243,13 +271,32 @@ onBeforeMount(() => {
     let grid: any[][] = []
 
     function drawGrid() {
-      let cellSize = p5.width / cols
+      let spacingCells = Math.ceil(cols / 2)
+      let cellSize = p5.width / (cols + spacingCells * 2)
       for (let y = 0; y < rows; y++) {
         for (let x = 0; x < cols; x++) {
           let colorValue = 255 - (grid[y][x] / (p5.states - 1)) * 255
           p5.fill(colorValue)
           p5.stroke(0)
+          p5.rect((x + spacingCells) * cellSize, y * cellSize, cellSize, cellSize)
+        }
+      }
+
+      //draw neighbors
+      for (let y = 0; y < rows; y++) {
+        for (let x = 0; x < spacingCells; x++) {
+          let colorValue = 255 - (grid[y][cols - spacingCells + x] / (p5.states - 1)) * 255
+          p5.fill(colorValue / 2)
+          p5.stroke(0)
           p5.rect(x * cellSize, y * cellSize, cellSize, cellSize)
+        }
+      }
+      for (let y = 0; y < rows; y++) {
+        for (let x = 0; x < spacingCells; x++) {
+          let colorValue = 255 - (grid[y][x] / (p5.states - 1)) * 255
+          p5.fill(colorValue / 2)
+          p5.stroke(0)
+          p5.rect((cols + spacingCells + x) * cellSize, y * cellSize, cellSize, cellSize)
         }
       }
     }
@@ -262,14 +309,28 @@ onBeforeMount(() => {
     function generateNextState() {
       for (let y = 1; y < rows; y++) {
         for (let x = 0; x < cols; x++) {
-          let left = grid[y - 1][(x - 1 + cols) % cols]
-          let center = grid[y - 1][x]
-          let right = grid[y - 1][(x + 1) % cols]
-          let index = left * p5.states * p5.states + center * p5.states + right
+          let left, center, right
 
+          if (p5.edge === 0) {
+            // Periodic
+            left = grid[y - 1][(x - 1 + cols) % cols]
+            center = grid[y - 1][x]
+            right = grid[y - 1][(x + 1) % cols]
+          } else if (p5.edge === 1) {
+            // Mirror
+            left = grid[y - 1][x === 0 ? 0 : x - 1]
+            center = grid[y - 1][x]
+            right = grid[y - 1][x === cols - 1 ? cols - 1 : x + 1]
+          } else if (p5.edge === 2) {
+            // Filled by edgeValue
+            left = x === 0 ? p5.edgeValue : grid[y - 1][x - 1]
+            center = grid[y - 1][x]
+            right = x === cols - 1 ? p5.edgeValue : grid[y - 1][x + 1]
+          }
+
+          let index = left * p5.states * p5.states + center * p5.states + right
           let ruleNumber = p5.rules[x]
           let cellRules = generateRule(ruleNumber)
-
           grid[y][x] = cellRules[index]
         }
       }
@@ -551,6 +612,20 @@ watch(
   statesValue,
   (newStatesValue) => {
     if (p5Instance) p5Instance.states = toRaw(newStatesValue)
+  },
+  { deep: true }
+)
+watch(
+  edgeTypeValue,
+  (newEdgeTypeValue) => {
+    if (p5Instance) p5Instance.edge = toRaw(newEdgeTypeValue)
+  },
+  { deep: true }
+)
+watch(
+  edgeValue,
+  (newEdgeValue) => {
+    if (p5Instance) p5Instance.edgeValue = toRaw(newEdgeValue)
   },
   { deep: true }
 )
