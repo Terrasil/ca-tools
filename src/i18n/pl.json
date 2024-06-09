@@ -1,0 +1,12 @@
+{
+  "cells": "Ilość komórek",
+  "iterations": "Ilość iteracji",
+  "states": "Ilość stanów",
+  "boundary": "Warunek brzegowy",
+  "fill": "Wartość wypełnienia",
+  "parameters": "Parametery",
+  "all": "Wszystkie",
+  "rule": "Regóła",
+  "state": "Stan",
+  "classes": "Klasy"
+}

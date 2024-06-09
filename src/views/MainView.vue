@@ -1,9 +1,11 @@
 <template>
   <div class="card flex justify-content-center">
     <div class="flex flex-column gap-2">
-      <div class="card flex gap-2 p-fluid">
+      <div class="card flex gap-2 p-fluid" style="min-height: 5rem">
         <div class="w-10rem align-content-end">
-          <label for="numberInput"><b>Ilość komórek</b></label>
+          <label for="numberInput"
+            ><b>{{ $t('cells') }}</b></label
+          >
           <InputNumber
             id="numberInput"
             mode="decimal"
@@ -15,7 +17,9 @@
           />
         </div>
         <div class="w-10rem align-content-end">
-          <label for="iterationInput"><b>Ilość iteracji</b></label>
+          <label for="iterationInput"
+            ><b>{{ $t('iterations') }}</b></label
+          >
           <InputNumber
             id="iterationInput"
             mode="decimal"
@@ -26,7 +30,9 @@
           />
         </div>
         <div class="w-10rem align-content-end">
-          <label for="statesInput"><b>Ilość stanów</b></label>
+          <label for="statesInput"
+            ><b>{{ $t('states') }}</b></label
+          >
           <InputNumber
             id="statesInput"
             mode="decimal"
@@ -34,10 +40,13 @@
             v-model="statesValue"
             showButtons
             :min="2"
+            :max="4"
           />
         </div>
         <div class="w-10rem align-content-end">
-          <label for="edgeTypeInput"><b>Warunek brzegowy</b></label>
+          <label for="edgeTypeInput"
+            ><b>{{ $t('boundary') }}</b></label
+          >
           <InputNumber
             id="edgeTypeInput"
             mode="decimal"
@@ -49,7 +58,9 @@
           />
         </div>
         <div class="w-10rem align-content-end" v-if="edgeTypeValue === 2">
-          <label for="edgeValueInput"><b>Wartość wypełnienia</b></label>
+          <label for="edgeValueInput"
+            ><b>{{ $t('fill') }}</b></label
+          >
           <InputNumber
             id="edgeValueInput"
             mode="decimal"
@@ -67,24 +78,28 @@
             severity="secondary"
             aria-label="Options"
             outlined
+            @click="toggleOptionDialog"
           />
           <Button
             class="option-h align-content-start"
             icon="pi pi-upload"
             severity="secondary"
             outlined
+            @click="toggleImportDialog"
           />
           <Button
             class="option-h align-content-start"
             icon="pi pi-download"
             severity="secondary"
             outlined
+            @click="toggleExportDialog"
           />
           <Dropdown
             v-model="selectedCountry"
             :options="countries"
             optionLabel="name"
             class="w-5rem option-h p-1"
+            @change="updateLocale"
           >
             <template #value="slotProps">
               <div v-if="slotProps.value" class="flex align-items-center">
@@ -114,44 +129,88 @@
         </div>
       </div>
       <div class="card flex gap-2 p-fluid">
-        <Fieldset legend="Rules" class="max-w-0 pb-2">
+        <Fieldset :legend="$t('parameters')" class="max-w-0 pb-2">
           <div class="card flex gap-2">
-            <div class="w-5rem">
+            <div>
               <div class="flex justify-content-center">
-                <label :for="`input-all`" class="font-bold block mb-2">all</label>
+                <label :for="`input-all`" class="font-bold block mb-2">{{ $t('all') }}</label>
               </div>
-              <InputNumber
-                v-model="allRule"
-                class="w-5rem mb-1"
-                mode="decimal"
-                showButtons
-                :allowEmpty="false"
-                :min="0"
-                :max="calculatePossibleAutomata(statesValue)"
-                :inputId="`input-all`"
-                @input="changeAllRules"
-              />
-              <InputNumber
-                v-model="allState"
-                class="w-5rem"
-                mode="decimal"
-                showButtons
-                :allowEmpty="false"
-                :min="0"
-                :max="statesValue - 1"
-                :inputId="`input-all`"
-                @input="changeAllStates"
-              />
+              <div class="flex justify-content-end">
+                <div class="flex justify-content-end option-h">
+                  <span class="line-height-5 mr-2">{{ $t('rule') }}</span>
+                </div>
+                <InputNumber
+                  v-model="allRule"
+                  class="w-5rem mb-1 mr-2"
+                  mode="decimal"
+                  showButtons
+                  :allowEmpty="false"
+                  :min="0"
+                  :max="calculatePossibleAutomata(statesValue)"
+                  :inputId="`input-all`"
+                  @input="changeAllRules"
+                />
+                <Button
+                  class="roll-button align-content-start text-xl"
+                  icon="mdi mdi-dice-multiple"
+                  severity="secondary"
+                  outlined
+                  @click="randomAllRule"
+                />
+              </div>
+              <div class="flex justify-content-end">
+                <div class="flex justify-content-end">
+                  <span class="line-height-5 mr-2">{{ $t('state') }}</span>
+                </div>
+                <InputNumber
+                  v-model="allState"
+                  class="w-5rem mr-2"
+                  mode="decimal"
+                  showButtons
+                  :allowEmpty="false"
+                  :min="0"
+                  :max="statesValue - 1"
+                  :inputId="`input-all`"
+                  @input="changeAllStates"
+                />
+                <Button
+                  class="roll-button align-content-start text-xl"
+                  icon="mdi mdi-dice-multiple"
+                  severity="secondary"
+                  outlined
+                  @click="randomAllState"
+                />
+              </div>
             </div>
             <Divider layout="vertical" />
-            <div class="card flex justify-content-center gap-2 pb-2 rules">
+            <div>
+              <div class="flex justify-content-center">
+                <label :for="`input-placeholder`" class="font-bold block mb-2">&nbsp;</label>
+              </div>
+              <Button
+                class="roll-button align-content-start text-xl mb-1"
+                icon="mdi mdi-dice-multiple"
+                severity="secondary"
+                outlined
+              />
+              <Button
+                class="roll-button align-content-start text-xl"
+                icon="mdi mdi-dice-multiple"
+                severity="secondary"
+                outlined
+              />
+            </div>
+            <div
+              class="card flex gap-2 pb-2 rules"
+              :class="{ 'justify-content-center': numberValue < 8 }"
+            >
               <div v-for="i in numberValue" :key="i" class="w-5rem">
                 <div class="flex justify-content-center">
                   <label :for="`input-${i}`" class="font-bold block mb-2">f{{ i }}</label>
                 </div>
                 <InputNumber
                   class="w-5rem mb-1"
-                  v-model="ruleInputs[i]"
+                  v-model="ruleInputs[i - 1]"
                   mode="decimal"
                   showButtons
                   :allowEmpty="false"
@@ -161,7 +220,7 @@
                 />
                 <InputNumber
                   class="w-5rem"
-                  v-model="startValueInputs[i]"
+                  v-model="startValueInputs[i - 1]"
                   mode="decimal"
                   showButtons
                   :allowEmpty="false"
@@ -173,7 +232,7 @@
             </div>
           </div>
         </Fieldset>
-        <Fieldset legend="Własności">
+        <Fieldset :legend="$t('classes')">
           <span :class="wlasnosci.zachowanieSumy ? 'text-green-400' : 'text-red-400'"
             ><i class="pi mr-1" :class="wlasnosci.zachowanieSumy ? 'pi-check' : 'pi-times'"></i
             >Zachowywanie sumy</span
@@ -200,10 +259,22 @@
     </div>
   </div>
   <div id="cy" ref="cyContainer"></div>
+  <Dialog v-model:visible="visibleOptionDialog" modal header="Opcje" :style="{ width: '25rem' }">
+  </Dialog>
+  <Dialog v-model:visible="visibleImportDialog" modal header="Importuj" :style="{ width: '25rem' }">
+  </Dialog>
+  <Dialog
+    v-model:visible="visibleExportDialog"
+    modal
+    header="Eksportuj"
+    :style="{ width: '25rem' }"
+  >
+  </Dialog>
 </template>
 
 <script setup lang="ts">
-import { ref, onBeforeMount, watch, toRaw, nextTick } from 'vue'
+import { ref, onBeforeMount, watch, toRaw } from 'vue'
+import { useI18n } from 'vue-i18n'
 import InputNumber from 'primevue/inputnumber'
 import Fieldset from 'primevue/fieldset'
 import Splitter from 'primevue/splitter'
@@ -211,12 +282,13 @@ import SplitterPanel from 'primevue/splitterpanel'
 import Divider from 'primevue/divider'
 import Dropdown from 'primevue/dropdown'
 import Button from 'primevue/button'
+import Dialog from 'primevue/dialog'
 
 // @ts-ignore
 import p5 from 'p5'
 import cytoscape from 'cytoscape'
 
-const numberValue = ref(18)
+const numberValue = ref(8)
 const iterationValue = ref(10)
 const statesValue = ref(2)
 const edgeTypeValue = ref(0)
@@ -226,7 +298,16 @@ const allState = ref(0)
 const ruleInputs = ref<{ [key: number]: number }>({})
 const startValueInputs = ref<{ [key: number]: number }>({})
 
+const visibleOptionDialog = ref(false)
+const toggleOptionDialog = () => (visibleOptionDialog.value = true)
+const visibleImportDialog = ref(false)
+const toggleImportDialog = () => (visibleImportDialog.value = true)
+const visibleExportDialog = ref(false)
+const toggleExportDialog = () => (visibleExportDialog.value = true)
+
 const cyContainer = ref(null)
+
+const i18n: any = useI18n()
 
 const wlasnosci = ref({
   zachowanieSumy: false,
@@ -235,11 +316,27 @@ const wlasnosci = ref({
   okresowosc: false
 })
 
-const selectedCountry = ref({ name: 'Polski', code: 'PL' })
+const selectedCountry = ref({ name: 'Polski', code: 'PL', value: 'pl' })
 const countries = ref([
-  { name: 'English', code: 'UK' },
-  { name: 'Polski', code: 'PL' }
+  { name: 'English', code: 'UK', value: 'en' },
+  { name: 'Polski', code: 'PL', value: 'pl' }
 ])
+
+const updateLocale = (lang: any) => {
+  i18n.locale.value = lang.value.value
+}
+
+const randomAllRule = () => {
+  console.log(statesValue.value)
+  const randomRule = Math.floor(Math.random() * (calculatePossibleAutomata(statesValue.value) + 1))
+  allRule.value = randomRule
+  changeAllRules({ value: randomRule })
+}
+const randomAllState = () => {
+  const randomState = Math.floor(Math.random() * statesValue.value)
+  allState.value = randomState
+  changeAllStates({ value: randomState })
+}
 
 let p5Instance: p5 | null = null
 
@@ -267,16 +364,37 @@ function calculatePossibleAutomata(states: number) {
 }
 
 const changeAllRules = (event: { value: number }) => {
-  for (let i = 0; i <= numberValue.value; i++) {
+  for (let i = 0; i < numberValue.value; i++) {
     ruleInputs.value[i] = event.value
   }
 }
 
 const changeAllStates = (event: { value: number }) => {
-  for (let i = 0; i <= numberValue.value; i++) {
+  for (let i = 0; i < numberValue.value; i++) {
     startValueInputs.value[i] = event.value
   }
 }
+function validateImportedLUT(lut: string) {}
+
+function validateLUT(lut: string) {
+  let maxValue = 0
+  for (let char of lut) {
+    const value = parseInt(char)
+    if (value > maxValue) {
+      maxValue = value
+    }
+  }
+  const states = maxValue + 1
+  const requiredLength = Math.pow(states, 3)
+  if (lut.length !== requiredLength) return false
+  for (let char of lut) {
+    const value = parseInt(char)
+    if (isNaN(value) || value < 0 || value >= states) return false
+  }
+  return true
+}
+
+function generateLUT() {}
 
 onBeforeMount(() => {
   for (let i = 0; i < numberValue.value; i++) {
@@ -292,6 +410,8 @@ onBeforeMount(() => {
     p5.edge = 2 // 0 - periodic, 1 - mirror, 2 - filled by edgeValue
     p5.edgeValue = 1
     p5.iterations = null
+    p5.drawNeighbors = false
+    p5.drawGrid = true
 
     let cols = Object.keys(p5.start).length
     let rows = p5.iterations
@@ -315,18 +435,20 @@ onBeforeMount(() => {
     }
 
     function drawGrid() {
-      let spacingCells = Math.ceil(cols / 2)
+      let spacingCells = p5.drawNeighbors ? Math.ceil(cols / 2) : 0
       let cellSize = p5.width / (cols + spacingCells * 2)
       for (let y = 0; y < rows; y++) {
         for (let x = 0; x < cols; x++) {
           let colorValue = 255 - (grid[y][x] / (p5.states - 1)) * 255
           p5.fill(colorValue)
-          p5.stroke(0)
+          if (p5.drawGrid) p5.stroke(0)
+          else p5.noStroke(0)
           p5.rect((x + spacingCells) * cellSize, y * cellSize, cellSize, cellSize)
         }
       }
 
       // draw neighbors
+      if (!p5.drawNeighbors) return
       // left
       for (let y = 0; y < rows; y++) {
         for (let x = 0; x < spacingCells; x++) {
@@ -336,7 +458,8 @@ onBeforeMount(() => {
           if (p5.edge === 1) colorValue = 255 - (grid[y][spacingCells - x] / (p5.states - 1)) * 255
           if (p5.edge === 2) colorValue = 255 - (p5.edgeValue / (p5.states - 1)) * 255
           p5.fill(colorValue)
-          p5.stroke(0)
+          if (p5.drawGrid) p5.stroke(0)
+          else p5.noStroke(0)
           p5.rect(x * cellSize, y * cellSize, cellSize, cellSize)
         }
       }
@@ -348,7 +471,8 @@ onBeforeMount(() => {
           if (p5.edge === 1) colorValue = 255 - (grid[y][cols - x - 1] / (p5.states - 1)) * 255
           if (p5.edge === 2) colorValue = 255 - (p5.edgeValue / (p5.states - 1)) * 255
           p5.fill(colorValue)
-          p5.stroke(0)
+          if (p5.drawGrid) p5.stroke(0)
+          else p5.noStroke(0)
           p5.rect((cols + spacingCells + x) * cellSize, y * cellSize, cellSize, cellSize)
         }
       }
@@ -411,7 +535,7 @@ onBeforeMount(() => {
       const parentElement = document.getElementById('vue-canvas')
       const parentWidth = parentElement?.clientWidth ?? 0
       rows = p5.iterations
-      let spacingCells = Math.ceil(cols / 2) * 2
+      let spacingCells = p5.drawNeighbors ? Math.ceil(cols / 2) * 2 : 0
       const parentHeight = 1 + (p5.width / (cols + spacingCells)) * rows ?? 500
       const canvas = p5.createCanvas(parentWidth, parentHeight)
       canvas.parent('vue-canvas')
@@ -439,7 +563,7 @@ onBeforeMount(() => {
     p5.windowResized = () => {
       const parentElement = document.getElementById('vue-canvas')
       const parentWidth = parentElement?.clientWidth ?? 0
-      let spacingCells = Math.ceil(cols / 2) * 2
+      let spacingCells = p5.drawNeighbors ? Math.ceil(cols / 2) * 2 : 0
       const parentHeight = 1 + (p5.width / (cols + spacingCells)) * rows ?? 500
       p5.resizeCanvas(parentWidth, parentHeight)
       p5.loop()
@@ -447,6 +571,8 @@ onBeforeMount(() => {
   }
 
   p5Instance = new p5(script)
+  p5Instance.rules = ruleInputs.value
+  p5Instance.start = startValueInputs.value
   p5Instance.iterations = iterationValue.value
   p5Instance.states = statesValue.value
   p5Instance.edge = edgeTypeValue.value
@@ -516,6 +642,13 @@ watch(
 </script>
 
 <style>
+.roll-button {
+  width: 2.375rem;
+  height: 2.375rem;
+}
+.line-height-5 {
+  line-height: 2.25;
+}
 .option-h {
   height: 2.5rem !important;
 }

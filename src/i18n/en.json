@@ -1,0 +1,15 @@
+{
+  "cells": "Number of cells",
+  "iterations": "Number of iterations",
+  "states": "Number of states",
+  "boundary": "Boundary condition",
+  "fill": "Fill value",
+  "parameters": "Parameters",
+  "all": "All",
+  "rule": "Rule",
+  "state": "State",
+  "classes": "Classes",
+  "ncca": "NCCA",
+  "ncca-title": "Number Conserving Cellular Automata",
+  "reversibility": "Reversibility"
+}
