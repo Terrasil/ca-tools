@@ -2,7 +2,7 @@
   <div class="card flex justify-content-center">
     <div class="flex flex-column gap-2">
       <div class="card flex gap-2 p-fluid">
-        <div class="w-10rem">
+        <div class="w-10rem align-content-end">
           <label for="numberInput"><b>Ilość komórek</b></label>
           <InputNumber
             id="numberInput"
@@ -14,7 +14,7 @@
             @input="onValueChanged"
           />
         </div>
-        <div class="w-10rem">
+        <div class="w-10rem align-content-end">
           <label for="iterationInput"><b>Ilość iteracji</b></label>
           <InputNumber
             id="iterationInput"
@@ -25,7 +25,7 @@
             :min="0"
           />
         </div>
-        <div class="w-10rem">
+        <div class="w-10rem align-content-end">
           <label for="statesInput"><b>Ilość stanów</b></label>
           <InputNumber
             id="statesInput"
@@ -36,8 +36,8 @@
             :min="2"
           />
         </div>
-        <div class="w-10rem">
-          <label for="edgeTypeInput"><b>Typ warunku brzegowego</b></label>
+        <div class="w-10rem align-content-end">
+          <label for="edgeTypeInput"><b>Warunek brzegowy</b></label>
           <InputNumber
             id="edgeTypeInput"
             mode="decimal"
@@ -48,7 +48,7 @@
             :max="2"
           />
         </div>
-        <div class="w-10rem" v-if="edgeTypeValue === 2">
+        <div class="w-10rem align-content-end" v-if="edgeTypeValue === 2">
           <label for="edgeValueInput"><b>Wartość wypełnienia</b></label>
           <InputNumber
             id="edgeValueInput"
@@ -60,35 +60,58 @@
             :max="statesValue - 1"
           />
         </div>
-        <Button icon="pi pi-cog" severity="secondary" aria-label="Options" outlined />
-        <Button icon="pi pi-upload" severity="secondary" outlined />
-        <Button icon="pi pi-download" severity="secondary" outlined />
-        <Dropdown v-model="selectedCountry" :options="countries" optionLabel="name" class="w-1 p-1">
-          <template #value="slotProps">
-            <div v-if="slotProps.value" class="flex align-items-center">
-              <img
-                :alt="slotProps.value.label"
-                src="https://primefaces.org/cdn/primevue/images/flag/flag_placeholder.png"
-                :class="`mr-2 flag flag-${slotProps.value.code.toLowerCase()}`"
-                style="width: 18px"
-              />
-            </div>
-            <span v-else>
-              {{ slotProps.placeholder }}
-            </span>
-          </template>
-          <template #option="slotProps">
-            <div class="flex align-items-center">
-              <img
-                :alt="slotProps.option.label"
-                src="https://primefaces.org/cdn/primevue/images/flag/flag_placeholder.png"
-                :class="`mr-2 flag flag-${slotProps.option.code.toLowerCase()}`"
-                style="width: 18px"
-              />
-              <div>{{ slotProps.option.name }}</div>
-            </div>
-          </template>
-        </Dropdown>
+        <div class="flex flex-1 gap-2 justify-content-end">
+          <Button
+            class="option-h align-content-start justify-content-center"
+            icon="pi pi-cog"
+            severity="secondary"
+            aria-label="Options"
+            outlined
+          />
+          <Button
+            class="option-h align-content-start"
+            icon="pi pi-upload"
+            severity="secondary"
+            outlined
+          />
+          <Button
+            class="option-h align-content-start"
+            icon="pi pi-download"
+            severity="secondary"
+            outlined
+          />
+          <Dropdown
+            v-model="selectedCountry"
+            :options="countries"
+            optionLabel="name"
+            class="w-5rem option-h p-1"
+          >
+            <template #value="slotProps">
+              <div v-if="slotProps.value" class="flex align-items-center">
+                <img
+                  :alt="slotProps.value.label"
+                  src="https://primefaces.org/cdn/primevue/images/flag/flag_placeholder.png"
+                  :class="`mr-2 flag flag-${slotProps.value.code.toLowerCase()}`"
+                  style="width: 18px"
+                />
+              </div>
+              <span v-else>
+                {{ slotProps.placeholder }}
+              </span>
+            </template>
+            <template #option="slotProps">
+              <div class="flex align-items-center">
+                <img
+                  :alt="slotProps.option.label"
+                  src="https://primefaces.org/cdn/primevue/images/flag/flag_placeholder.png"
+                  :class="`mr-2 flag flag-${slotProps.option.code.toLowerCase()}`"
+                  style="width: 18px"
+                />
+                <div>{{ slotProps.option.name }}</div>
+              </div>
+            </template>
+          </Dropdown>
+        </div>
       </div>
       <div class="card flex gap-2 p-fluid">
         <Fieldset legend="Rules" class="max-w-0 pb-2">
@@ -147,48 +170,6 @@
                   :inputId="`input-${i}`"
                 />
               </div>
-              <!--<VirtualScroller
-                :items="
-                  Object.keys(ruleInputs).map((key) => ({
-                    key: Number(key),
-                    value: ruleInputs[key]
-                  }))
-                "
-                :itemSize="88"
-                :scrollHeight="'128px'"
-                orientation="horizontal"
-                class="card flex justify-content-center gap-2 p-fluid rules"
-              >
-                <template v-slot:item="{ item }">
-                  <div class="mr-2">
-                    <div class="flex justify-content-center">
-                      <label :for="`input-${item.key}`" class="font-bold block mb-2"
-                        >f{{ item.key + 1 }}</label
-                      >
-                    </div>
-                    <InputNumber
-                      class="w-5rem mb-1"
-                      v-model="ruleInputs[item.key]"
-                      mode="decimal"
-                      showButtons
-                      :allowEmpty="false"
-                      :min="0"
-                      :max="calculatePossibleAutomata(statesValue)"
-                      :inputId="`input-${item.key}`"
-                    />
-                    <InputNumber
-                      class="w-5rem"
-                      v-model="startValueInputs[item.key]"
-                      mode="decimal"
-                      showButtons
-                      :allowEmpty="false"
-                      :min="0"
-                      :max="statesValue - 1"
-                      :inputId="`input-${item.key}`"
-                    />
-                  </div>
-                </template>
-              </VirtualScroller>-->
             </div>
           </div>
         </Fieldset>
@@ -230,7 +211,6 @@ import SplitterPanel from 'primevue/splitterpanel'
 import Divider from 'primevue/divider'
 import Dropdown from 'primevue/dropdown'
 import Button from 'primevue/button'
-//import VirtualScroller from 'primevue/virtualscroller'
 
 // @ts-ignore
 import p5 from 'p5'
@@ -283,7 +263,7 @@ const onValueChanged = (event: { value: number }) => {
 function calculatePossibleAutomata(states: number) {
   const possibleNeighborhoods = Math.pow(states, 3)
   const possibleAutomata = Math.pow(states, possibleNeighborhoods)
-  return possibleAutomata
+  return possibleAutomata - 1
 }
 
 const changeAllRules = (event: { value: number }) => {
@@ -536,6 +516,9 @@ watch(
 </script>
 
 <style>
+.option-h {
+  height: 2.5rem !important;
+}
 .rules {
   max-width: 696px !important;
   min-width: 696px !important;
