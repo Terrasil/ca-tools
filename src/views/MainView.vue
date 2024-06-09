@@ -60,7 +60,7 @@
             :max="statesValue - 1"
           />
         </div>
-        <!--<Button icon="pi pi-cog" severity="secondary" aria-label="Options" outlined />-->
+        <Button icon="pi pi-cog" severity="secondary" aria-label="Options" outlined />
         <Button icon="pi pi-upload" severity="secondary" outlined />
         <Button icon="pi pi-download" severity="secondary" outlined />
         <Dropdown v-model="selectedCountry" :options="countries" optionLabel="name" class="w-1 p-1">
@@ -91,9 +91,9 @@
         </Dropdown>
       </div>
       <div class="card flex gap-2 p-fluid">
-        <Fieldset legend="Rules" class="max-w-0">
+        <Fieldset legend="Rules" class="max-w-0 pb-2">
           <div class="card flex gap-2">
-            <div class="w-1">
+            <div class="w-5rem">
               <div class="flex justify-content-center">
                 <label :for="`input-all`" class="font-bold block mb-2">all</label>
               </div>
@@ -121,8 +121,8 @@
               />
             </div>
             <Divider layout="vertical" />
-            <div class="card flex gap-2 p-fluid pb-2 rules">
-              <div v-for="i in numberValue" :key="i">
+            <div class="card flex justify-content-center gap-2 pb-2 rules">
+              <div v-for="i in numberValue" :key="i" class="w-5rem">
                 <div class="flex justify-content-center">
                   <label :for="`input-${i}`" class="font-bold block mb-2">f{{ i }}</label>
                 </div>
@@ -147,6 +147,48 @@
                   :inputId="`input-${i}`"
                 />
               </div>
+              <!--<VirtualScroller
+                :items="
+                  Object.keys(ruleInputs).map((key) => ({
+                    key: Number(key),
+                    value: ruleInputs[key]
+                  }))
+                "
+                :itemSize="88"
+                :scrollHeight="'128px'"
+                orientation="horizontal"
+                class="card flex justify-content-center gap-2 p-fluid rules"
+              >
+                <template v-slot:item="{ item }">
+                  <div class="mr-2">
+                    <div class="flex justify-content-center">
+                      <label :for="`input-${item.key}`" class="font-bold block mb-2"
+                        >f{{ item.key + 1 }}</label
+                      >
+                    </div>
+                    <InputNumber
+                      class="w-5rem mb-1"
+                      v-model="ruleInputs[item.key]"
+                      mode="decimal"
+                      showButtons
+                      :allowEmpty="false"
+                      :min="0"
+                      :max="calculatePossibleAutomata(statesValue)"
+                      :inputId="`input-${item.key}`"
+                    />
+                    <InputNumber
+                      class="w-5rem"
+                      v-model="startValueInputs[item.key]"
+                      mode="decimal"
+                      showButtons
+                      :allowEmpty="false"
+                      :min="0"
+                      :max="statesValue - 1"
+                      :inputId="`input-${item.key}`"
+                    />
+                  </div>
+                </template>
+              </VirtualScroller>-->
             </div>
           </div>
         </Fieldset>
@@ -176,10 +218,11 @@
       </Splitter>
     </div>
   </div>
+  <div id="cy" ref="cyContainer"></div>
 </template>
 
 <script setup lang="ts">
-import { ref, onBeforeMount, watch, toRaw } from 'vue'
+import { ref, onBeforeMount, watch, toRaw, nextTick } from 'vue'
 import InputNumber from 'primevue/inputnumber'
 import Fieldset from 'primevue/fieldset'
 import Splitter from 'primevue/splitter'
@@ -187,11 +230,13 @@ import SplitterPanel from 'primevue/splitterpanel'
 import Divider from 'primevue/divider'
 import Dropdown from 'primevue/dropdown'
 import Button from 'primevue/button'
+//import VirtualScroller from 'primevue/virtualscroller'
 
 // @ts-ignore
 import p5 from 'p5'
+import cytoscape from 'cytoscape'
 
-const numberValue = ref(8)
+const numberValue = ref(18)
 const iterationValue = ref(10)
 const statesValue = ref(2)
 const edgeTypeValue = ref(0)
@@ -200,6 +245,8 @@ const allRule = ref(0)
 const allState = ref(0)
 const ruleInputs = ref<{ [key: number]: number }>({})
 const startValueInputs = ref<{ [key: number]: number }>({})
+
+const cyContainer = ref(null)
 
 const wlasnosci = ref({
   zachowanieSumy: false,
@@ -240,13 +287,13 @@ function calculatePossibleAutomata(states: number) {
 }
 
 const changeAllRules = (event: { value: number }) => {
-  for (let i = 0; i < numberValue.value; i++) {
+  for (let i = 0; i <= numberValue.value; i++) {
     ruleInputs.value[i] = event.value
   }
 }
 
 const changeAllStates = (event: { value: number }) => {
-  for (let i = 0; i < numberValue.value; i++) {
+  for (let i = 0; i <= numberValue.value; i++) {
     startValueInputs.value[i] = event.value
   }
 }
@@ -270,6 +317,23 @@ onBeforeMount(() => {
     let rows = p5.iterations
     let grid: any[][] = []
 
+    function drawGradient(
+      x: number,
+      y: number,
+      w: number,
+      h: number,
+      startColor: any,
+      endColor: any
+    ) {
+      let gradient = p5.drawingContext.createLinearGradient(x, 0, x + w, 0)
+      gradient.addColorStop(0, startColor)
+      gradient.addColorStop(1, endColor)
+      let saveFillStyle = p5.drawingContext.fillStyle
+      p5.drawingContext.fillStyle = gradient
+      p5.drawingContext.fillRect(x, y, w, h)
+      p5.drawingContext.fillStyle = saveFillStyle
+    }
+
     function drawGrid() {
       let spacingCells = Math.ceil(cols / 2)
       let cellSize = p5.width / (cols + spacingCells * 2)
@@ -282,7 +346,8 @@ onBeforeMount(() => {
         }
       }
 
-      //draw neighbors
+      // draw neighbors
+      // left
       for (let y = 0; y < rows; y++) {
         for (let x = 0; x < spacingCells; x++) {
           let colorValue = 0
@@ -290,22 +355,41 @@ onBeforeMount(() => {
             colorValue = 255 - (grid[y][cols - spacingCells + x] / (p5.states - 1)) * 255
           if (p5.edge === 1) colorValue = 255 - (grid[y][spacingCells - x] / (p5.states - 1)) * 255
           if (p5.edge === 2) colorValue = 255 - (p5.edgeValue / (p5.states - 1)) * 255
-          p5.fill(colorValue / 2)
+          p5.fill(colorValue)
           p5.stroke(0)
           p5.rect(x * cellSize, y * cellSize, cellSize, cellSize)
         }
       }
+      // right
       for (let y = 0; y < rows; y++) {
         for (let x = 0; x < spacingCells; x++) {
           let colorValue = 0
           if (p5.edge === 0) colorValue = 255 - (grid[y][x] / (p5.states - 1)) * 255
           if (p5.edge === 1) colorValue = 255 - (grid[y][cols - x - 1] / (p5.states - 1)) * 255
           if (p5.edge === 2) colorValue = 255 - (p5.edgeValue / (p5.states - 1)) * 255
-          p5.fill(colorValue / 2)
+          p5.fill(colorValue)
           p5.stroke(0)
           p5.rect((cols + spacingCells + x) * cellSize, y * cellSize, cellSize, cellSize)
         }
       }
+      // left
+      drawGradient(
+        0,
+        0,
+        spacingCells * cellSize,
+        rows * cellSize + 1,
+        p5.color(255, 255, 255, 255),
+        p5.color(0, 0, 0, 128)
+      )
+      // right
+      drawGradient(
+        (cols + spacingCells) * cellSize,
+        0,
+        spacingCells * cellSize,
+        rows * cellSize + 1,
+        p5.color(0, 0, 0, 128),
+        p5.color(255, 255, 255, 255)
+      )
     }
 
     function generateRule(ruleNumber: { toString: (arg0: number) => string }) {
@@ -343,221 +427,12 @@ onBeforeMount(() => {
       }
     }
 
-    function checkNumberConservation(
-      f: (left: number, center: number, right: number) => number,
-      S: number | null,
-      testConfigurations: number[][]
-    ) {
-      function sum(arr: number[]) {
-        return arr.reduce((a, b) => a + b, 0)
-      }
-
-      for (const x of testConfigurations) {
-        const sumBefore = sum(x)
-        const xNew: number[] = []
-        for (let i = 0; i < x.length; i++) {
-          const left = i > 0 ? x[i - 1] : 0
-          const center = x[i]
-          const right = i < x.length - 1 ? x[i + 1] : 0
-          const newState = f(left, center, right)
-          xNew.push(newState)
-        }
-        const sumAfter = sum(xNew)
-        if (sumBefore !== sumAfter) {
-          return false
-        }
-      }
-      return true
-    }
-
-    function checkReversibility(
-      F: (left: number, center: number, right: number) => number,
-      S: number | null,
-      testConfigurations: number[][]
-    ): [boolean, Map<any, any> | null] {
-      function generateRightGraph(
-        F: (left: number, center: number, right: number) => number,
-        S: number | null
-      ) {
-        const graph = new Map()
-
-        function addEdge(u: any, y: number) {
-          const v = F(u[0], u[1], y)
-          if (!graph.has(u)) {
-            graph.set(u, [])
-          }
-          graph.get(u).push(v)
-        }
-
-        const initial = F(0, 0, 0)
-        const nodes = [initial]
-        graph.set(initial, [])
-
-        while (nodes.length > 0) {
-          const u = nodes.pop()!
-          for (let y = 0; y < (S || 10); y++) {
-            const v = F(u[0], u[1], y)
-            if (!graph.has(v)) {
-              graph.set(v, [])
-              nodes.push(v)
-            }
-            addEdge(u, y)
-          }
-        }
-
-        return graph
-      }
-
-      function constructInverseFunction(graph: Map<any, any[]>) {
-        const F_inv = new Map()
-        for (const [u, neighbors] of graph.entries()) {
-          for (const v of neighbors) {
-            if (!F_inv.has(v)) {
-              F_inv.set(v, [])
-            }
-            F_inv.get(v).push(u)
-          }
-        }
-        return F_inv
-      }
-
-      function isStronglyConnected(graph: Map<any, any[]>) {
-        function dfs(graph: Map<any, any[]>, node: any, visited: Set<any>) {
-          visited.add(node)
-          for (let neighbor of graph.get(node) || []) {
-            if (!visited.has(neighbor)) {
-              dfs(graph, neighbor, visited)
-            }
-          }
-        }
-
-        const nodes = Array.from(graph.keys())
-        const visited = new Set()
-        dfs(graph, nodes[0], visited)
-
-        if (visited.size !== nodes.length) {
-          return false
-        }
-
-        const transposedGraph = new Map()
-        for (let [node, neighbors] of graph.entries()) {
-          for (let neighbor of neighbors) {
-            if (!transposedGraph.has(neighbor)) {
-              transposedGraph.set(neighbor, [])
-            }
-            transposedGraph.get(neighbor).push(node)
-          }
-        }
-
-        const transposedVisited = new Set()
-        dfs(transposedGraph, nodes[0], transposedVisited)
-
-        return transposedVisited.size === nodes.length
-      }
-
-      const graph = generateRightGraph(F, S)
-      if (isStronglyConnected(graph)) {
-        const F_inv = constructInverseFunction(graph)
-        for (const x of testConfigurations) {
-          const xNew = F(x[0], x[1], x[2])
-          const xRestored = F_inv.get(xNew)
-          if (!xRestored || JSON.stringify(x) !== JSON.stringify(xRestored[0])) {
-            return [false, null]
-          }
-        }
-        return [true, F_inv]
-      }
-      return [false, null]
-    }
-
-    function checkReplication(
-      K: (left: number, center: number, right: number) => number,
-      n0: number,
-      testConfigurations: number[][]
-    ) {
-      function updateConfiguration(
-        x: number[],
-        K: (left: number, center: number, right: number) => number
-      ) {
-        const xNew: number[] = []
-        for (let i = 0; i < x.length; i++) {
-          const left = i > 0 ? x[i - 1] : 0
-          const center = x[i]
-          const right = i < x.length - 1 ? x[i + 1] : 0
-          const newState = K(left, center, right)
-          xNew.push(newState)
-        }
-        return xNew
-      }
-
-      function isReplicator(initialConfig: number[], currentConfig: number[]) {
-        const initialString = initialConfig.join('')
-        const currentString = currentConfig.join('')
-        return currentString.includes(initialString + initialString)
-      }
-
-      for (const x of testConfigurations) {
-        let currentConfig = x
-        for (let t = 1; t <= n0; t++) {
-          currentConfig = updateConfiguration(currentConfig, K)
-        }
-        if (isReplicator(x, currentConfig)) {
-          return true
-        }
-      }
-      return false
-    }
-
-    function checkPeriodicity(
-      f: (left: number, center: number, right: number) => number,
-      n0: number,
-      testConfigurations: number[][]
-    ) {
-      function updateConfiguration(
-        x: number[],
-        f: (left: number, center: number, right: number) => number
-      ) {
-        const xNew: number[] = []
-        for (let i = 0; i < x.length; i++) {
-          const left = i > 0 ? x[i - 1] : 0
-          const center = x[i]
-          const right = i < x.length - 1 ? x[i + 1] : 0
-          const newState = f(left, center, right)
-          xNew.push(newState)
-        }
-        return xNew
-      }
-
-      for (const x of testConfigurations) {
-        const initialConfig = x
-        let currentConfig = x
-        for (let t = 1; t <= n0; t++) {
-          currentConfig = updateConfiguration(currentConfig, f)
-          if (JSON.stringify(currentConfig) === JSON.stringify(initialConfig)) {
-            return true
-          }
-        }
-      }
-      return false
-    }
-
-    function tests() {
-      const f = (left: number, center: number, right: number) =>
-        p5.rules[`${left}${center}${right}`] || 0
-      const S = p5.states
-      const testConfigurations = [Object.values(p5.start) as number[]]
-
-      wlasnosci.value.zachowanieSumy = checkNumberConservation(f, S, testConfigurations)
-      wlasnosci.value.odwracalnosc = checkReversibility(f, S, testConfigurations)[0] ?? undefined
-      wlasnosci.value.replikacja = checkReplication(f, p5.iterations, testConfigurations)
-      wlasnosci.value.okresowosc = checkPeriodicity(f, p5.iterations, testConfigurations)
-    }
-
     p5.setup = () => {
       const parentElement = document.getElementById('vue-canvas')
       const parentWidth = parentElement?.clientWidth ?? 0
       rows = p5.iterations
-      const parentHeight = (p5.width / cols) * rows ?? 500
+      let spacingCells = Math.ceil(cols / 2) * 2
+      const parentHeight = 1 + (p5.width / (cols + spacingCells)) * rows ?? 500
       const canvas = p5.createCanvas(parentWidth, parentHeight)
       canvas.parent('vue-canvas')
     }
@@ -578,61 +453,83 @@ onBeforeMount(() => {
       p5.background(255)
       generateNextState()
       drawGrid()
-      tests()
+      p5.noLoop()
     }
 
     p5.windowResized = () => {
       const parentElement = document.getElementById('vue-canvas')
       const parentWidth = parentElement?.clientWidth ?? 0
-      const parentHeight = (p5.width / cols) * rows ?? 500
+      let spacingCells = Math.ceil(cols / 2) * 2
+      const parentHeight = 1 + (p5.width / (cols + spacingCells)) * rows ?? 500
       p5.resizeCanvas(parentWidth, parentHeight)
+      p5.loop()
     }
   }
 
   p5Instance = new p5(script)
   p5Instance.iterations = iterationValue.value
   p5Instance.states = statesValue.value
+  p5Instance.edge = edgeTypeValue.value
+  p5Instance.edgeValue = edgeValue.value
 })
 
 watch(
   ruleInputs,
   (newRuleInputs) => {
-    if (p5Instance) p5Instance.rules = toRaw(newRuleInputs)
+    if (p5Instance) {
+      p5Instance.rules = toRaw(newRuleInputs)
+      p5Instance.loop()
+    }
   },
   { deep: true }
 )
 watch(
   startValueInputs,
   (newStartValueInputs) => {
-    if (p5Instance) p5Instance.start = toRaw(newStartValueInputs)
+    if (p5Instance) {
+      p5Instance.start = toRaw(newStartValueInputs)
+      p5Instance.loop()
+    }
   },
   { deep: true }
 )
 watch(
   iterationValue,
   (newIterationValue) => {
-    if (p5Instance) p5Instance.iterations = toRaw(newIterationValue)
+    if (p5Instance) {
+      p5Instance.iterations = toRaw(newIterationValue)
+      p5Instance.loop()
+    }
   },
   { deep: true }
 )
 watch(
   statesValue,
   (newStatesValue) => {
-    if (p5Instance) p5Instance.states = toRaw(newStatesValue)
+    if (p5Instance) {
+      p5Instance.states = toRaw(newStatesValue)
+      p5Instance.loop()
+    }
   },
   { deep: true }
 )
 watch(
   edgeTypeValue,
   (newEdgeTypeValue) => {
-    if (p5Instance) p5Instance.edge = toRaw(newEdgeTypeValue)
+    if (p5Instance) {
+      p5Instance.edge = toRaw(newEdgeTypeValue)
+      p5Instance.loop()
+    }
   },
   { deep: true }
 )
 watch(
   edgeValue,
   (newEdgeValue) => {
-    if (p5Instance) p5Instance.edgeValue = toRaw(newEdgeValue)
+    if (p5Instance) {
+      p5Instance.edgeValue = toRaw(newEdgeValue)
+      p5Instance.loop()
+    }
   },
   { deep: true }
 )
@@ -642,6 +539,6 @@ watch(
 .rules {
   max-width: 696px !important;
   min-width: 696px !important;
-  overflow-x: auto;
+  overflow-x: auto !important;
 }
 </style>
