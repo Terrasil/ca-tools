@@ -287,7 +287,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onBeforeMount, watch, toRaw } from 'vue'
+import { ref, onBeforeMount, watch, toRaw, nextTick } from 'vue'
 import { useI18n } from 'vue-i18n'
 import InputNumber from 'primevue/inputnumber'
 import Fieldset from 'primevue/fieldset'
@@ -446,23 +446,53 @@ const generateColors = () => {
 }
 
 // Example data for the graph
-const edges = [
-  ['00', '00', 0],
-  ['00', '01', 1],
-  ['01', '10', 1],
-  ['01', '00', 0],
-  ['10', '11', 1],
-  ['10', '01', 0],
-  ['11', '11', 0],
-  ['11', '10', 1]
-]
+// const edges = [
+//   ['00', '00', 0],
+//   ['00', '01', 1],
+//   ['01', '11', 0],
+//   ['11', '11', 0],
+//   ['11', '10', 0],
+//   ['10', '00', 0],
+//   ['10', '01', 1],
+//   ['01', '10', 0]
+// ]
+
+function generateAutomatonEdges(k, r, ruleLUT) {
+  const edges = []
+  const neighborhoodSize = 2 * r + 1
+
+  // Generate all possible neighborhoods
+  const totalCombinations = Math.pow(k, neighborhoodSize)
+
+  for (let i = 0; i < totalCombinations; i++) {
+    // Convert index to neighborhood (binary string or base-k string)
+    const neighborhood = i.toString(k).padStart(neighborhoodSize, '0')
+
+    // Get the rule output (the next state)
+    const nextState = ruleLUT[i]
+
+    // Generate edges based on the neighborhood
+    const startState = neighborhood.slice(0, -1) // xy (first part)
+    const endState = neighborhood.slice(1) // yz (second part)
+
+    // Push the edge: ["xy", "yz", output]
+    edges.push([startState, endState, parseInt(nextState)])
+  }
+
+  return edges
+}
+
+const k = 3 // Number of states
+const r = 1 // Neighborhood radius
+const ruleLUT = '022102102202120222212200010' // Example rule LUT for r=1, k=2
+const edges = generateAutomatonEdges(k, r, ruleLUT)
 
 // Function to generate DOT graph
-const generateCircularLayout = (edges) => {
+function generateCircularLayout(edges) {
   const nodes = new Set()
   const radius = 2
   let dotOutput = 'digraph finite_state_machine {\n'
-  dotOutput += '\tlayout=neato;\n'
+  dotOutput += '\tlayout=fdp;\n'
   dotOutput += '\tnode [shape = circle, fixedsize=true];\n\n'
 
   edges.forEach((edge) => {
@@ -485,7 +515,7 @@ const generateCircularLayout = (edges) => {
     const startNode = edge[0]
     const endNode = edge[1]
     const label = edge[2]
-    dotOutput += `\t"${startNode}" -> "${endNode}" [xlabel = "${label}", decorate=true];\n`
+    dotOutput += `\t"${startNode}" -> "${endNode}" [label = "${label}"];\n`
   })
 
   dotOutput += '}'
@@ -627,13 +657,14 @@ onBeforeMount(() => {
       }
     }
 
-    p5.setup = () => {
+    p5.setup = async () => {
       const parentElement = document.getElementById('vue-canvas')
       const parentWidth = parentElement?.clientWidth ?? 0
       rows = p5.iterations
       let spacingCells = p5.drawNeighbors ? Math.ceil(cols / 2) * 2 : 0
-      const parentHeight = 1 + (p5.width / (cols + spacingCells)) * rows ?? 500
+      const parentHeight = 1 + (p5.width / (cols + spacingCells)) * rows
       const canvas = p5.createCanvas(parentWidth, parentHeight)
+      await nextTick()
       canvas.parent('vue-canvas')
     }
 
