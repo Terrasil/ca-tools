@@ -71,6 +71,17 @@
             :max="statesValue - 1"
           />
         </div>
+
+        <div class="w-10rem align-content-end">
+          <Button
+            class="roll-button align-content-start text-xl"
+            icon="mdi mdi-graphql"
+            severity="secondary"
+            outlined
+            title="Generuj diagram de Burjin'a"
+            @click="toggleGraphDialog"
+          />
+        </div>
         <div class="flex flex-1 gap-2 justify-content-end">
           <Button
             class="option-h align-content-start justify-content-center"
@@ -263,6 +274,9 @@
   </Dialog>
   <Dialog v-model:visible="visibleImportDialog" modal header="Importuj" :style="{ width: '25rem' }">
   </Dialog>
+  <Dialog v-model:visible="visibleGraphDialog" modal header="Diagram de Burjina'a">
+    <div id="graph" ref="graph"></div>
+  </Dialog>
   <Dialog
     v-model:visible="visibleExportDialog"
     modal
@@ -286,7 +300,12 @@ import Dialog from 'primevue/dialog'
 
 // @ts-ignore
 import p5 from 'p5'
+// @ts-ignore
 import cytoscape from 'cytoscape'
+// @ts-ignore
+import * as d3 from 'd3'
+// @ts-ignore
+import { instance } from '@viz-js/viz'
 
 const numberValue = ref(8)
 const iterationValue = ref(10)
@@ -304,8 +323,29 @@ const visibleImportDialog = ref(false)
 const toggleImportDialog = () => (visibleImportDialog.value = true)
 const visibleExportDialog = ref(false)
 const toggleExportDialog = () => (visibleExportDialog.value = true)
+const visibleGraphDialog = ref(false)
+const toggleGraphDialog = () => {
+  instance()
+    .then((viz) => {
+      const dotCode = generateCircularLayout(edges)
+      const svgElement = viz.renderSVGElement(dotCode) // Synchronous render
+      // Append the SVG element using document.getElementById
+      const graphElement = document.getElementById('graph') // Find the element by ID
+      if (graphElement) {
+        graphElement.innerHTML = '' // Clear any previous content
+        graphElement.appendChild(svgElement) // Append the new SVG
+      } else {
+        console.error('Graph element not found')
+      }
+    })
+    .catch((error) => {
+      console.error('Error rendering graph:', error)
+    })
+  visibleGraphDialog.value = true
+}
 
 const cyContainer = ref(null)
+const graph = ref(null)
 
 const i18n: any = useI18n()
 
@@ -396,6 +436,62 @@ function validateLUT(lut: string) {
 
 function generateLUT() {}
 
+const generateColors = () => {
+  // Generowanie wartości od 0 do 1 z krokiem 0.01
+  const values = d3.range(0, 1.01, 0.01)
+  // Skala kolorów (gradient)
+  const colorScale = d3.scaleSequential(d3.interpolateViridis).domain([0, 1])
+  // Przekształcenie wartości na kolory
+  console.log(values.map((value: any) => colorScale(value)))
+}
+
+// Example data for the graph
+const edges = [
+  ['00', '00', 0],
+  ['00', '01', 1],
+  ['01', '10', 1],
+  ['01', '00', 0],
+  ['10', '11', 1],
+  ['10', '01', 0],
+  ['11', '11', 0],
+  ['11', '10', 1]
+]
+
+// Function to generate DOT graph
+const generateCircularLayout = (edges) => {
+  const nodes = new Set()
+  const radius = 2
+  let dotOutput = 'digraph finite_state_machine {\n'
+  dotOutput += '\tlayout=neato;\n'
+  dotOutput += '\tnode [shape = circle, fixedsize=true];\n\n'
+
+  edges.forEach((edge) => {
+    nodes.add(edge[0])
+    nodes.add(edge[1])
+  })
+
+  const nodeArray = Array.from(nodes)
+  const numNodes = nodeArray.length
+  for (let i = 0; i < numNodes; i++) {
+    const angle = (2 * Math.PI * i) / numNodes
+    const x = (radius * Math.cos(angle)).toFixed(3)
+    const y = (radius * Math.sin(angle)).toFixed(3)
+    dotOutput += `\t"${nodeArray[i]}" [pos="${x},${y}!"];\n`
+  }
+
+  dotOutput += '\n'
+
+  edges.forEach((edge) => {
+    const startNode = edge[0]
+    const endNode = edge[1]
+    const label = edge[2]
+    dotOutput += `\t"${startNode}" -> "${endNode}" [xlabel = "${label}", decorate=true];\n`
+  })
+
+  dotOutput += '}'
+  return dotOutput
+}
+
 onBeforeMount(() => {
   for (let i = 0; i < numberValue.value; i++) {
     ruleInputs.value[i] = 0
@@ -410,7 +506,7 @@ onBeforeMount(() => {
     p5.edge = 2 // 0 - periodic, 1 - mirror, 2 - filled by edgeValue
     p5.edgeValue = 1
     p5.iterations = null
-    p5.drawNeighbors = false
+    p5.drawNeighbors = true
     p5.drawGrid = true
 
     let cols = Object.keys(p5.start).length
@@ -656,5 +752,10 @@ watch(
   max-width: 696px !important;
   min-width: 696px !important;
   overflow-x: auto !important;
+}
+#graph {
+  width: 100%;
+  height: 100%;
+  overflow: auto;
 }
 </style>
