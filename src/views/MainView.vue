@@ -203,12 +203,14 @@
                 icon="mdi mdi-dice-multiple"
                 severity="secondary"
                 outlined
+                @click="randomRules"
               />
               <Button
                 class="roll-button align-content-start text-xl"
                 icon="mdi mdi-dice-multiple"
                 severity="secondary"
                 outlined
+                @click="randomStates"
               />
             </div>
             <div
@@ -383,6 +385,20 @@ const randomAllState = () => {
   changeAllStates({ value: randomState })
 }
 
+const randomRules = () => {
+  for (let i = 0; i < numberValue.value; i++) {
+    ruleInputs.value[i] = Math.floor(
+      Math.random() * (calculatePossibleAutomata(statesValue.value) + 1)
+    )
+  }
+}
+
+const randomStates = () => {
+  for (let i = 0; i < numberValue.value; i++) {
+    startValueInputs.value[i] = Math.floor(Math.random() * statesValue.value)
+  }
+}
+
 let p5Instance: p5 | null = null
 
 const onValueChanged = (event: { value: number }) => {
@@ -419,6 +435,7 @@ const changeAllStates = (event: { value: number }) => {
     startValueInputs.value[i] = event.value
   }
 }
+
 function validateImportedLUT(lut: string) {}
 
 function validateLUT(lut: string) {
@@ -476,7 +493,7 @@ function generateAutomatonEdges(k: number, r: number, ruleLUT: string) {
   return edges
 }
 
-function convertToBase(n, k, x) {
+function convertToBase(n: number, k: number, x: number) {
   if (k < 2 || k > 36) {
     throw new Error('Base must be between 2 and 36')
   }
