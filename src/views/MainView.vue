@@ -325,6 +325,11 @@ const visibleExportDialog = ref(false)
 const toggleExportDialog = () => (visibleExportDialog.value = true)
 const visibleGraphDialog = ref(false)
 const toggleGraphDialog = () => {
+  const k = statesValue.value // Number of states allRule
+  const r = 1 // Neighborhood radius
+  const neighborhoodSize = 2 * r + 1
+  const ruleLUT = convertToBase(allRule.value, k, neighborhoodSize) // Example rule LUT for r=1, k=2
+  const edges = generateAutomatonEdges(k, r, ruleLUT)
   instance()
     .then((viz) => {
       const dotCode = generateCircularLayout(edges)
@@ -341,6 +346,7 @@ const toggleGraphDialog = () => {
     .catch((error) => {
       console.error('Error rendering graph:', error)
     })
+
   visibleGraphDialog.value = true
 }
 
@@ -367,7 +373,6 @@ const updateLocale = (lang: any) => {
 }
 
 const randomAllRule = () => {
-  console.log(statesValue.value)
   const randomRule = Math.floor(Math.random() * (calculatePossibleAutomata(statesValue.value) + 1))
   allRule.value = randomRule
   changeAllRules({ value: randomRule })
@@ -445,21 +450,10 @@ const generateColors = () => {
   console.log(values.map((value: any) => colorScale(value)))
 }
 
-// Example data for the graph
-// const edges = [
-//   ['00', '00', 0],
-//   ['00', '01', 1],
-//   ['01', '11', 0],
-//   ['11', '11', 0],
-//   ['11', '10', 0],
-//   ['10', '00', 0],
-//   ['10', '01', 1],
-//   ['01', '10', 0]
-// ]
-
-function generateAutomatonEdges(k, r, ruleLUT) {
-  const edges = []
+// Generate data for the graph
+function generateAutomatonEdges(k: number, r: number, ruleLUT: string) {
   const neighborhoodSize = 2 * r + 1
+  const edges = []
 
   // Generate all possible neighborhoods
   const totalCombinations = Math.pow(k, neighborhoodSize)
@@ -482,26 +476,36 @@ function generateAutomatonEdges(k, r, ruleLUT) {
   return edges
 }
 
-const k = 3 // Number of states
-const r = 1 // Neighborhood radius
-const ruleLUT = '022102102202120222212200010' // Example rule LUT for r=1, k=2
-const edges = generateAutomatonEdges(k, r, ruleLUT)
+function convertToBase(n, k, x) {
+  if (k < 2 || k > 36) {
+    throw new Error('Base must be between 2 and 36')
+  }
+  // Calculate the minimum length based on k^x
+  const minLength = Math.pow(k, x)
+  // Convert number to the specified base
+  let result = n.toString(k)
+  // Pad the result with leading zeros if necessary to match the minLength
+  while (result.length < minLength) {
+    result = '0' + result
+  }
+  return result
+}
 
 // Function to generate DOT graph
-function generateCircularLayout(edges) {
+function generateCircularLayout(edges: any[]) {
   const nodes = new Set()
-  const radius = 2
   let dotOutput = 'digraph finite_state_machine {\n'
   dotOutput += '\tlayout=fdp;\n'
   dotOutput += '\tnode [shape = circle, fixedsize=true];\n\n'
 
-  edges.forEach((edge) => {
+  edges.forEach((edge: unknown[]) => {
     nodes.add(edge[0])
     nodes.add(edge[1])
   })
 
   const nodeArray = Array.from(nodes)
   const numNodes = nodeArray.length
+  const radius = Math.sqrt(numNodes)
   for (let i = 0; i < numNodes; i++) {
     const angle = (2 * Math.PI * i) / numNodes
     const x = (radius * Math.cos(angle)).toFixed(3)
@@ -511,7 +515,7 @@ function generateCircularLayout(edges) {
 
   dotOutput += '\n'
 
-  edges.forEach((edge) => {
+  edges.forEach((edge: any[]) => {
     const startNode = edge[0]
     const endNode = edge[1]
     const label = edge[2]
@@ -691,7 +695,7 @@ onBeforeMount(() => {
       const parentElement = document.getElementById('vue-canvas')
       const parentWidth = parentElement?.clientWidth ?? 0
       let spacingCells = p5.drawNeighbors ? Math.ceil(cols / 2) * 2 : 0
-      const parentHeight = 1 + (p5.width / (cols + spacingCells)) * rows ?? 500
+      const parentHeight = 1 + (p5.width / (cols + spacingCells)) * rows
       p5.resizeCanvas(parentWidth, parentHeight)
       p5.loop()
     }
