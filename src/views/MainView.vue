@@ -245,8 +245,8 @@
             </div>
           </div>
         </Fieldset>
-        <Fieldset :legend="$t('classes')">
-          <span :class="wlasnosci.zachowanieSumy ? 'text-green-400' : 'text-red-400'"
+        <Fieldset :legend="$t('properties')">
+          <!-- <span :class="wlasnosci.zachowanieSumy ? 'text-green-400' : 'text-red-400'"
             ><i class="pi mr-1" :class="wlasnosci.zachowanieSumy ? 'pi-check' : 'pi-times'"></i
             >Zachowywanie sumy</span
           ><br />
@@ -261,7 +261,23 @@
           <span :class="wlasnosci.okresowosc ? 'text-green-400' : 'text-red-400'"
             ><i class="pi mr-1" :class="wlasnosci.okresowosc ? 'pi-check' : 'pi-times'"></i
             >Cykliczny</span
-          >
+          > -->
+          <span :class="wlasnosci.zachowanieSumy ? 'text-green-400' : 'text-red-400'"
+            ><i class="pi mr-1" :class="wlasnosci.zachowanieSumy ? 'pi-check' : 'pi-times'"></i
+            >{{ $t('reversibe') }}</span
+          ><br />
+          <span :class="wlasnosci.zachowanieSumy ? 'text-green-400' : 'text-red-400'" title="test"
+            ><i class="pi mr-1" :class="wlasnosci.zachowanieSumy ? 'pi-check' : 'pi-times'"></i
+            >{{ $t('ncca') }}</span
+          ><br />
+          <span :class="wlasnosci.zachowanieSumy ? 'text-green-400' : 'text-red-400'"
+            ><i class="pi mr-1" :class="wlasnosci.zachowanieSumy ? 'pi-check' : 'pi-times'"></i
+            >{{ $t('reversibeNcca') }}</span
+          ><br />
+          <span :class="wlasnosci.zachowanieSumy ? 'text-green-400' : 'text-red-400'"
+            ><i class="pi mr-1" :class="wlasnosci.zachowanieSumy ? 'pi-check' : 'pi-times'"></i
+            >{{ $t('periodic') }}</span
+          ><br />
         </Fieldset>
       </div>
       <Splitter>
@@ -439,21 +455,41 @@ const changeAllStates = (event: { value: number }) => {
 function validateImportedLUT(lut: string) {}
 
 function validateLUT(lut: string) {
-  let maxValue = 0
-  for (let char of lut) {
-    const value = parseInt(char)
-    if (value > maxValue) {
-      maxValue = value
+  // Znajdź maksymalny stan w LUT (wyciąganie liczby stanów s)
+  let maxValue = Math.max(...lut.split('').map(Number))
+  let s = maxValue + 1 // liczba stanów
+  // Długość LUT
+  let lutLength = lut.length
+  // Znajdź odpowiedniego kandydata na r
+  let foundValidR = false
+  let r = 0
+  // Szukamy r, gdzie s^(2r+1) == lutLength
+  for (let possibleR = 0; possibleR < 100; possibleR++) {
+    if (Math.pow(s, 2 * possibleR + 1) === lutLength) {
+      r = possibleR
+      foundValidR = true
+      break
     }
   }
-  const states = maxValue + 1
-  const requiredLength = Math.pow(states, 3)
-  if (lut.length !== requiredLength) return false
-  for (let char of lut) {
-    const value = parseInt(char)
-    if (isNaN(value) || value < 0 || value >= states) return false
+  // Jeśli nie znaleziono poprawnego r, zwracamy błąd
+  if (!foundValidR) {
+    return { isValid: false, states: null, radius: null }
   }
-  return true
+  // Walidacja ciągu LUT: wszystkie liczby muszą być mniejsze niż s
+  let isValid = lut.split('').every((c: string) => {
+    let value = parseInt(c, 10)
+    return value >= 0 && value < s
+  })
+  // Jeśli walidacja jest poprawna, zwracamy dane
+  if (isValid) {
+    return {
+      isValid: true,
+      states: s,
+      radius: r
+    }
+  } else {
+    return { isValid: false, states: null, radius: null }
+  }
 }
 
 function generateLUT() {}

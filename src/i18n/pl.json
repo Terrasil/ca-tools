@@ -8,5 +8,9 @@
   "all": "Wszystkie",
   "rule": "Regóła",
   "state": "Stan",
-  "classes": "Klasy"
+  "properties": "Właściwości",
+  "reversibe": "Odwracalny k-arny",
+  "ncca": "k-arny NCCA",
+  "reversibeNcca": "Odwracalny k-arny NCCA",
+  "periodic": "Cykliczny"
 }

@@ -8,8 +8,9 @@
   "all": "All",
   "rule": "Rule",
   "state": "State",
-  "classes": "Classes",
-  "ncca": "NCCA",
-  "ncca-title": "Number Conserving Cellular Automata",
-  "reversibility": "Reversibility"
+  "properties": "Properties",
+  "reversibe": "Reversible k-ary",
+  "ncca": "k-ary NCCA",
+  "reversibeNcca": "Reversible k-ary NCCA",
+  "periodic": "Periodic"
 }
