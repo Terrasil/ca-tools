@@ -335,13 +335,22 @@
   <Dialog v-model:visible="visibleGraphDialog" modal header="Diagram de Burjina'a">
     <div id="graph" ref="graph"></div>
   </Dialog>
-  <Dialog
-    v-model:visible="visibleExportDialog"
-    modal
-    header="Eksportuj"
-    :style="{ width: '25rem' }"
-  >
-    <Textarea rows="5" cols="30" />
+  <Dialog v-model:visible="visibleExportDialog" modal header="Eksportuj">
+    <div class="flex align-items-center mb-2">
+      <Checkbox v-model="useStates" :binary="true" @change="generateExportLUT()" />
+      <label for="useStates" class="ml-2">{{ $t('useStates') }}</label>
+    </div>
+    <Textarea v-model="exportLUTtext" disabled rows="12" cols="48" />
+    <div class="flex flex-1 justify-content-end">
+      <Button
+        severity="primary"
+        label="Pobierz"
+        class="mt-3"
+        icon="pi pi-download"
+        iconPos="right"
+        @click="downloadLUT"
+      />
+    </div>
   </Dialog>
 </template>
 
@@ -359,6 +368,7 @@ import Button from 'primevue/button'
 import Dialog from 'primevue/dialog'
 import Textarea from 'primevue/textarea'
 import FileUpload from 'primevue/fileupload'
+import Checkbox from 'primevue/checkbox'
 
 // @ts-ignore
 import p5 from 'p5'
@@ -379,9 +389,11 @@ const edgeTypeOptionValue = ref({ name: i18n.t('endless'), value: 0 })
 const edgeValue = ref(0)
 const allRule = ref<number>(0)
 const allState = ref(0)
+const useStates = ref(false)
 const ruleInputs = ref<{ [key: number]: number }>({})
 const startValueInputs = ref<{ [key: number]: number }>({})
 const importLUTtext = ref<string>('')
+const exportLUTtext = ref<string>('')
 const validLUT = ref(false)
 const parsedLUT = ref<{
   states?: string
@@ -398,7 +410,10 @@ const toggleOptionDialog = () => (visibleOptionDialog.value = true)
 const visibleImportDialog = ref(false)
 const toggleImportDialog = () => (visibleImportDialog.value = true)
 const visibleExportDialog = ref(false)
-const toggleExportDialog = () => (visibleExportDialog.value = true)
+const toggleExportDialog = () => {
+  generateExportLUT()
+  visibleExportDialog.value = true
+}
 const visibleGraphDialog = ref(false)
 const toggleGraphDialog = () => {
   const k = statesValue.value // Number of states allRule
@@ -545,6 +560,29 @@ function setParsedLUT() {
     }
   }
   visibleImportDialog.value = false
+  importLUTtext.value = ''
+}
+
+function generateExportLUT() {
+  let exportLut = ''
+  if (useStates.value) {
+    Object.values(startValueInputs.value).forEach((input) => {
+      exportLut += input.toString()
+    })
+    exportLut += ':'
+  }
+  if (
+    Object.values(ruleInputs.value).some((value) => value !== Object.values(ruleInputs.value)[0])
+  ) {
+    // If there are more than one input, generate LUT for each and join with "|"
+    exportLut += Object.values(ruleInputs.value)
+      .map((input) => generateLUT(input, statesValue.value, 1))
+      .join('|')
+  } else {
+    // If there's exactly one input, generate LUT without any separator
+    exportLut += generateLUT(Object.values(ruleInputs.value)[0], statesValue.value, 1)
+  }
+  exportLUTtext.value = exportLut
 }
 
 function parseLUT(lut: string) {
@@ -559,7 +597,6 @@ function parseLUT(lut: string) {
     let k = 0
     const rules = rulesPart?.split('|')
     rules.forEach(function (value, _index) {
-      console.log(validateLUT(value))
       if (validLUT.value && !validateLUT(value).isValid) validLUT.value = false
       else k = validateLUT(value).states ?? 0
     })
@@ -573,8 +610,7 @@ function parseLUT(lut: string) {
   } else {
     const rules = lut?.split('|')
     let k = 0
-    rules.forEach(function (value, index) {
-      console.log(validateLUT(value))
+    rules.forEach(function (value, _index) {
       if (!validateLUT(value).isValid) validLUT.value = false
       else k = validateLUT(value).states ?? 0
     })
@@ -632,7 +668,19 @@ function validateLUT(lut: string) {
   }
 }
 
-function generateLUT() {}
+function generateLUT(rule: number, states: number, neighbours: number) {
+  const lutLength = Math.pow(states, 2 * neighbours + 1) // Calculate LUT length
+  let lut = ''
+
+  // Generate LUT by converting the rule number to a base `states`
+  for (let i = 0; i < lutLength; i++) {
+    // Get the corresponding state for each position
+    lut = (rule % states) + lut // Append the state to the LUT
+    rule = Math.floor(rule / states) // Update the rule by dividing it by states
+  }
+
+  return lut
+}
 
 const generateColors = () => {
   // Generowanie wartości od 0 do 1 z krokiem 0.01
@@ -704,6 +752,38 @@ const onUpload = async (event: FileUploadSelectEvent) => {
     }
     // Read the file as text
     reader.readAsText(file)
+  }
+}
+
+// Funkcja do zapisywania danych do pliku
+const downloadLUT = async () => {
+  try {
+    // Opcje dla showSaveFilePicker
+    const options = {
+      suggestedName: 'lut.ca',
+      types: [
+        {
+          description: 'Cellural Automata File',
+          accept: { 'text/plain': ['.ca'] }
+        },
+        {
+          description: 'Text Files',
+          accept: { 'text/plain': ['.txt'] }
+        }
+      ]
+    }
+
+    // Otwórz okno dialogowe "Zapisz jako"
+    const handle = await showSaveFilePicker(options)
+
+    // Stwórz plik w pamięci
+    const writable = await handle.createWritable()
+    await writable.write(exportLUTtext.value) // Zapisz dane do pliku
+    await writable.close() // Zamknij plik i zakończ operację
+
+    visibleExportDialog.value = false
+  } catch (err) {
+    console.error('Error saving the file:', err)
   }
 }
 

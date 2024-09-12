@@ -17,5 +17,6 @@
   "mirror": "Zamknięte odbijające",
   "filled": "Zamknięte pochłaniające",
   "validLut": "Porawny LUT",
-  "invalidLut": "Niepoprawny LUT"
+  "invalidLut": "Niepoprawny LUT",
+  "useStates": "Użyj stanów taśmy"
 }

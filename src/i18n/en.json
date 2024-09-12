@@ -17,5 +17,6 @@
   "mirror": "Mirrored",
   "filled": "Fixed",
   "validLut": "Valid LUT",
-  "invalidLut": "Invalid LUT"
+  "invalidLut": "Invalid LUT",
+  "useStates": "Use tape states"
 }
