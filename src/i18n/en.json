@@ -13,7 +13,9 @@
   "ncca": "k-ary NCCA",
   "reversibeNcca": "Reversible k-ary NCCA",
   "periodic": "Periodic",
-  "endless": "Endless",
+  "endless": "Periodic",
+  "mirror": "Mirrored",
+  "filled": "Fixed",
   "validLut": "Valid LUT",
   "invalidLut": "Invalid LUT"
 }

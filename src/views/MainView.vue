@@ -310,27 +310,25 @@
       </div>
       <div class="flex flex-1 gap-2 justify-content-end">
         <div class="align-content-end">
-          <span :class="validateLUT(importLUTtext).isValid ? 'text-green-400' : 'text-red-400'"
-            ><i
-              class="pi mr-1"
-              :class="validateLUT(importLUTtext).isValid ? 'pi-check' : 'pi-times'"
-            ></i
-            >{{ validateLUT(importLUTtext).isValid ? $t('validLut') : $t('invalidLut') }}</span
+          <span :class="validLUT ? 'text-green-400' : 'text-red-400'"
+            ><i class="pi mr-1" :class="validLUT ? 'pi-check' : 'pi-times'"></i
+            >{{ validLUT ? $t('validLut') : $t('invalidLut') }}</span
           ><br />
         </div>
       </div>
     </div>
     <div>
-      <Textarea v-model="importLUTtext" rows="12" cols="48" />
+      <Textarea v-model="importLUTtext" @input="parseLUT(importLUTtext)" rows="12" cols="48" />
     </div>
     <div class="flex flex-1 justify-content-end">
       <Button
-        :disabled="!validateLUT(importLUTtext).isValid"
+        :disabled="!validLUT"
         severity="primary"
         label="Użyj"
         class="mt-3"
         icon="pi pi-check"
         iconPos="right"
+        @click="setParsedLUT"
       />
     </div>
   </Dialog>
@@ -350,7 +348,7 @@
 <script setup lang="ts">
 import { ref, onBeforeMount, watch, toRaw, nextTick } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { FileUploadSelectEvent } from 'primevue/fileupload'
+import type { FileUploadSelectEvent } from 'primevue/fileupload'
 import InputNumber from 'primevue/inputnumber'
 import Fieldset from 'primevue/fieldset'
 import Splitter from 'primevue/splitter'
@@ -371,17 +369,29 @@ import * as d3 from 'd3'
 // @ts-ignore
 import { instance } from '@viz-js/viz'
 
+const i18n: any = useI18n()
+
 const numberValue = ref(8)
 const iterationValue = ref(10)
 const statesValue = ref(2)
 const edgeTypeValue = ref(0)
-const edgeTypeOptionValue = ref(0)
+const edgeTypeOptionValue = ref({ name: i18n.t('endless'), value: 0 })
 const edgeValue = ref(0)
 const allRule = ref<number>(0)
 const allState = ref(0)
 const ruleInputs = ref<{ [key: number]: number }>({})
 const startValueInputs = ref<{ [key: number]: number }>({})
 const importLUTtext = ref<string>('')
+const validLUT = ref(false)
+const parsedLUT = ref<{
+  states?: string
+  rules?: Array<string>
+  k?: number
+}>({
+  states: undefined,
+  rules: undefined,
+  k: undefined
+})
 
 const visibleOptionDialog = ref(false)
 const toggleOptionDialog = () => (visibleOptionDialog.value = true)
@@ -419,8 +429,6 @@ const toggleGraphDialog = () => {
 const cyContainer = ref(null)
 const graph = ref(null)
 
-const i18n: any = useI18n()
-
 const wlasnosci = ref({
   zachowanieSumy: false,
   odwracalnosc: false,
@@ -436,12 +444,20 @@ const countries = ref([
 
 const edgeOptions = ref([
   { name: i18n.t('endless'), value: 0 },
-  { name: 'mirror', value: 1 },
-  { name: 'filled', value: 2 }
+  { name: i18n.t('mirror'), value: 1 },
+  { name: i18n.t('filled'), value: 2 }
 ])
 
 const updateLocale = (lang: any) => {
   i18n.locale.value = lang.value.value
+  edgeOptions.value = [
+    { name: i18n.t('endless'), value: 0 },
+    { name: i18n.t('mirror'), value: 1 },
+    { name: i18n.t('filled'), value: 2 }
+  ]
+  edgeTypeOptionValue.value = edgeOptions.value.find(
+    (e) => e.value === edgeTypeOptionValue.value.value
+  ) ?? { name: i18n.t('endless'), value: 0 }
 }
 
 const updateEdgeType = (edge: any) => {
@@ -510,7 +526,73 @@ const changeAllStates = (event: { value: number }) => {
   }
 }
 
-function validateImportedLUT(lut: string) {}
+function setParsedLUT() {
+  const data = parsedLUT.value
+  if (data.rules === undefined || data.k === undefined) return
+  statesValue.value = data.k
+  if (data.states !== undefined) {
+    numberValue.value = data.states.length
+    for (let i = 0; i < data.states.length; i++) {
+      startValueInputs.value[i] = parseInt(data.states[i], data.k)
+    }
+  }
+  if (data.rules.length === 1) {
+    allRule.value = parseInt(data.rules[0], data.k)
+    changeAllRules({ value: parseInt(data.rules[0], data.k) })
+  } else {
+    for (let i = 0; i < data.rules.length; i++) {
+      ruleInputs.value[i] = parseInt(data.rules[i], data.k)
+    }
+  }
+  visibleImportDialog.value = false
+}
+
+function parseLUT(lut: string) {
+  validLUT.value = true
+  if (lut.indexOf(':') >= 0 && lut.indexOf('|') >= 0 && lut.indexOf(':') > lut.indexOf('|'))
+    validLUT.value = false
+  if ((lut.match(/:/g) || []).length > 1) validLUT.value = false
+
+  if (lut.indexOf(':') >= 0) {
+    const [statesPart, rulesPart] = lut.split(':')
+    const states = statesPart
+    let k = 0
+    const rules = rulesPart?.split('|')
+    rules.forEach(function (value, _index) {
+      console.log(validateLUT(value))
+      if (validLUT.value && !validateLUT(value).isValid) validLUT.value = false
+      else k = validateLUT(value).states ?? 0
+    })
+    if ((lut.match(/\|/g) || []).length > 0 && (lut.match(/\|/g) || []).length < states.length - 1)
+      validLUT.value = false
+    parsedLUT.value = {
+      states,
+      rules,
+      k
+    }
+  } else {
+    const rules = lut?.split('|')
+    let k = 0
+    rules.forEach(function (value, index) {
+      console.log(validateLUT(value))
+      if (!validateLUT(value).isValid) validLUT.value = false
+      else k = validateLUT(value).states ?? 0
+    })
+    const states = undefined
+    parsedLUT.value = {
+      states,
+      rules,
+      k
+    }
+  }
+  if (!validLUT.value) {
+    parsedLUT.value = {
+      states: undefined,
+      rules: undefined,
+      k: undefined
+    }
+  }
+}
 
 function validateLUT(lut: string) {
   // Znajdź maksymalny stan w LUT (wyciąganie liczby stanów s)
@@ -541,7 +623,7 @@ function validateLUT(lut: string) {
   // Jeśli walidacja jest poprawna, zwracamy dane
   if (isValid) {
     return {
-      isValid: true,
+      isValid: r > 0,
       states: s,
       radius: r
     }
@@ -611,7 +693,8 @@ const onUpload = async (event: FileUploadSelectEvent) => {
       // Check if the result is a string
       const result = e.target?.result
       if (typeof result === 'string') {
-        importLUTtext.value = result
+        importLUTtext.value = result.trim()
+        parseLUT(importLUTtext.value)
       } else {
         console.error('File content is not a valid string')
       }
@@ -704,8 +787,8 @@ onBeforeMount(() => {
         for (let x = 0; x < cols; x++) {
           let colorValue = 255 - (grid[y][x] / (p5.states - 1)) * 255
           p5.fill(colorValue)
-          if (p5.drawGrid) p5.stroke(0)
-          else p5.noStroke(0)
+          if (p5.drawGrid) p5.stroke(127)
+          else p5.noStroke(127)
           p5.rect((x + spacingCells) * cellSize, y * cellSize, cellSize, cellSize)
         }
       }
@@ -721,8 +804,8 @@ onBeforeMount(() => {
           if (p5.edge === 1) colorValue = 255 - (grid[y][spacingCells - x] / (p5.states - 1)) * 255
           if (p5.edge === 2) colorValue = 255 - (p5.edgeValue / (p5.states - 1)) * 255
           p5.fill(colorValue)
-          if (p5.drawGrid) p5.stroke(0)
-          else p5.noStroke(0)
+          if (p5.drawGrid) p5.stroke(127)
+          else p5.noStroke(127)
           p5.rect(x * cellSize, y * cellSize, cellSize, cellSize)
         }
       }
@@ -734,8 +817,8 @@ onBeforeMount(() => {
           if (p5.edge === 1) colorValue = 255 - (grid[y][cols - x - 1] / (p5.states - 1)) * 255
           if (p5.edge === 2) colorValue = 255 - (p5.edgeValue / (p5.states - 1)) * 255
           p5.fill(colorValue)
-          if (p5.drawGrid) p5.stroke(0)
-          else p5.noStroke(0)
+          if (p5.drawGrid) p5.stroke(127)
+          else p5.noStroke(127)
           p5.rect((cols + spacingCells + x) * cellSize, y * cellSize, cellSize, cellSize)
         }
       }
