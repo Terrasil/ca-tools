@@ -12,5 +12,8 @@
   "reversibe": "Odwracalny k-arny",
   "ncca": "k-arny NCCA",
   "reversibeNcca": "Odwracalny k-arny NCCA",
-  "periodic": "Cykliczny"
+  "periodic": "Cykliczny",
+  "endless": "Periodyczne",
+  "validLut": "Porawny LUT",
+  "invalidLut": "Niepoprawny LUT"
 }

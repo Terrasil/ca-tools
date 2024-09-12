@@ -47,15 +47,12 @@
           <label for="edgeTypeInput"
             ><b>{{ $t('boundary') }}</b></label
           >
-          <InputNumber
-            id="edgeTypeInput"
-            mode="decimal"
-            :allowEmpty="false"
-            v-model="edgeTypeValue"
-            showButtons
-            :min="0"
-            :max="2"
-          />
+          <Dropdown
+            v-model="edgeTypeOptionValue"
+            :options="edgeOptions"
+            optionLabel="name"
+            @change="updateEdgeType"
+          ></Dropdown>
         </div>
         <div class="w-10rem align-content-end" v-if="edgeTypeValue === 2">
           <label for="edgeValueInput"
@@ -71,7 +68,6 @@
             :max="statesValue - 1"
           />
         </div>
-
         <div class="w-10rem align-content-end">
           <Button
             class="roll-button align-content-start text-xl"
@@ -290,7 +286,53 @@
   <div id="cy" ref="cyContainer"></div>
   <Dialog v-model:visible="visibleOptionDialog" modal header="Opcje" :style="{ width: '25rem' }">
   </Dialog>
-  <Dialog v-model:visible="visibleImportDialog" modal header="Importuj" :style="{ width: '25rem' }">
+  <Dialog v-model:visible="visibleImportDialog" modal header="Importuj">
+    <div class="flex gap-2 p-fluid mb-3">
+      <div>
+        <FileUpload
+          id="import-ca"
+          accept=".txt,.ca"
+          mode="basic"
+          chooseLabel="Importuj CA"
+          custom-upload
+          :show-upload-button="false"
+          :show-cancel-button="false"
+          :show-clear-button="false"
+          :show-files="true"
+          :show-size="1000"
+          @select="onUpload"
+          @clear="null"
+        >
+          <template #empty>
+            <p>Drag and drop files to here to upload.</p>
+          </template>
+        </FileUpload>
+      </div>
+      <div class="flex flex-1 gap-2 justify-content-end">
+        <div class="align-content-end">
+          <span :class="validateLUT(importLUTtext).isValid ? 'text-green-400' : 'text-red-400'"
+            ><i
+              class="pi mr-1"
+              :class="validateLUT(importLUTtext).isValid ? 'pi-check' : 'pi-times'"
+            ></i
+            >{{ validateLUT(importLUTtext).isValid ? $t('validLut') : $t('invalidLut') }}</span
+          ><br />
+        </div>
+      </div>
+    </div>
+    <div>
+      <Textarea v-model="importLUTtext" rows="12" cols="48" />
+    </div>
+    <div class="flex flex-1 justify-content-end">
+      <Button
+        :disabled="!validateLUT(importLUTtext).isValid"
+        severity="primary"
+        label="Użyj"
+        class="mt-3"
+        icon="pi pi-check"
+        iconPos="right"
+      />
+    </div>
   </Dialog>
   <Dialog v-model:visible="visibleGraphDialog" modal header="Diagram de Burjina'a">
     <div id="graph" ref="graph"></div>
@@ -301,12 +343,14 @@
     header="Eksportuj"
     :style="{ width: '25rem' }"
   >
+    <Textarea rows="5" cols="30" />
   </Dialog>
 </template>
 
 <script setup lang="ts">
 import { ref, onBeforeMount, watch, toRaw, nextTick } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { FileUploadSelectEvent } from 'primevue/fileupload'
 import InputNumber from 'primevue/inputnumber'
 import Fieldset from 'primevue/fieldset'
 import Splitter from 'primevue/splitter'
@@ -315,6 +359,8 @@ import Divider from 'primevue/divider'
 import Dropdown from 'primevue/dropdown'
 import Button from 'primevue/button'
 import Dialog from 'primevue/dialog'
+import Textarea from 'primevue/textarea'
+import FileUpload from 'primevue/fileupload'
 
 // @ts-ignore
 import p5 from 'p5'
@@ -329,11 +375,13 @@ const numberValue = ref(8)
 const iterationValue = ref(10)
 const statesValue = ref(2)
 const edgeTypeValue = ref(0)
+const edgeTypeOptionValue = ref(0)
 const edgeValue = ref(0)
-const allRule = ref(0)
+const allRule = ref<number>(0)
 const allState = ref(0)
 const ruleInputs = ref<{ [key: number]: number }>({})
 const startValueInputs = ref<{ [key: number]: number }>({})
+const importLUTtext = ref<string>('')
 
 const visibleOptionDialog = ref(false)
 const toggleOptionDialog = () => (visibleOptionDialog.value = true)
@@ -386,8 +434,18 @@ const countries = ref([
   { name: 'Polski', code: 'PL', value: 'pl' }
 ])
 
+const edgeOptions = ref([
+  { name: i18n.t('endless'), value: 0 },
+  { name: 'mirror', value: 1 },
+  { name: 'filled', value: 2 }
+])
+
 const updateLocale = (lang: any) => {
   i18n.locale.value = lang.value.value
+}
+
+const updateEdgeType = (edge: any) => {
+  edgeTypeValue.value = edge.value.value
 }
 
 const randomAllRule = () => {
@@ -531,7 +589,7 @@ function generateAutomatonEdges(k: number, r: number, ruleLUT: string) {
 
 function convertToBase(n: number, k: number, x: number) {
   if (k < 2 || k > 36) {
-    throw new Error('Base must be between 2 and 36')
+    throw new Error('Base must be between 2 and 36') // 10 digits and 26 letters
   }
   // Calculate the minimum length based on k^x
   const minLength = Math.pow(k, x)
@@ -542,6 +600,28 @@ function convertToBase(n: number, k: number, x: number) {
     result = '0' + result
   }
   return result
+}
+
+const onUpload = async (event: FileUploadSelectEvent) => {
+  // Ensure there is a file selected
+  if (event.files.length > 0) {
+    const file = event.files[0] // Get the first file
+    const reader = new FileReader()
+    reader.onload = (e) => {
+      // Check if the result is a string
+      const result = e.target?.result
+      if (typeof result === 'string') {
+        importLUTtext.value = result
+      } else {
+        console.error('File content is not a valid string')
+      }
+    }
+    reader.onerror = (e) => {
+      console.error('Error reading file:', e)
+    }
+    // Read the file as text
+    reader.readAsText(file)
+  }
 }
 
 // Function to generate DOT graph

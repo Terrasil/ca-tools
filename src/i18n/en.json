@@ -12,5 +12,8 @@
   "reversibe": "Reversible k-ary",
   "ncca": "k-ary NCCA",
   "reversibeNcca": "Reversible k-ary NCCA",
-  "periodic": "Periodic"
+  "periodic": "Periodic",
+  "endless": "Endless",
+  "validLut": "Valid LUT",
+  "invalidLut": "Invalid LUT"
 }
