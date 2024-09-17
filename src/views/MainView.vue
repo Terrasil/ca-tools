@@ -242,22 +242,6 @@
           </div>
         </Fieldset>
         <Fieldset :legend="$t('properties')">
-          <!-- <span :class="wlasnosci.zachowanieSumy ? 'text-green-400' : 'text-red-400'"
-            ><i class="pi mr-1" :class="wlasnosci.zachowanieSumy ? 'pi-check' : 'pi-times'"></i
-            >Zachowywanie sumy</span
-          ><br />
-          <span :class="wlasnosci.odwracalnosc ? 'text-green-400' : 'text-red-400'"
-            ><i class="pi mr-1" :class="wlasnosci.odwracalnosc ? 'pi-check' : 'pi-times'"></i
-            >Odwracalny</span
-          ><br />
-          <span :class="wlasnosci.replikacja ? 'text-green-400' : 'text-red-400'"
-            ><i class="pi mr-1" :class="wlasnosci.replikacja ? 'pi-check' : 'pi-times'"></i
-            >Replikujący</span
-          ><br />
-          <span :class="wlasnosci.okresowosc ? 'text-green-400' : 'text-red-400'"
-            ><i class="pi mr-1" :class="wlasnosci.okresowosc ? 'pi-check' : 'pi-times'"></i
-            >Cykliczny</span
-          > -->
           <span :class="wlasnosci.zachowanieSumy ? 'text-green-400' : 'text-red-400'"
             ><i class="pi mr-1" :class="wlasnosci.zachowanieSumy ? 'pi-check' : 'pi-times'"></i
             >{{ $t('reversibe') }}</span
@@ -285,6 +269,14 @@
   </div>
   <div id="cy" ref="cyContainer"></div>
   <Dialog v-model:visible="visibleOptionDialog" modal header="Opcje" :style="{ width: '25rem' }">
+    <div class="flex align-items-center mb-2">
+      <Checkbox v-model="options.showNeighbours" :binary="true" @change="null" />
+      <label for="showNeighbours" class="ml-2">{{ $t('showNeighbours') }}</label>
+    </div>
+    <div v-if="options.showNeighbours" class="flex align-items-center mb-2">
+      <Checkbox v-model="options.gradientNeighbours" :binary="true" @change="null" />
+      <label for="gradientNeighbours" class="ml-2">{{ $t('gradientNeighbours') }}</label>
+    </div>
   </Dialog>
   <Dialog v-model:visible="visibleImportDialog" modal header="Importuj">
     <div class="flex gap-2 p-fluid mb-3">
@@ -373,8 +365,6 @@ import Checkbox from 'primevue/checkbox'
 // @ts-ignore
 import p5 from 'p5'
 // @ts-ignore
-import cytoscape from 'cytoscape'
-// @ts-ignore
 import * as d3 from 'd3'
 // @ts-ignore
 import { instance } from '@viz-js/viz'
@@ -403,6 +393,14 @@ const parsedLUT = ref<{
   states: undefined,
   rules: undefined,
   k: undefined
+})
+type Options = {
+  showNeighbours: boolean
+  gradientNeighbours: boolean
+}
+const options = ref<Options>({
+  showNeighbours: true,
+  gradientNeighbours: true
 })
 
 const visibleOptionDialog = ref(false)
@@ -837,6 +835,7 @@ onBeforeMount(() => {
     p5.edgeValue = 1
     p5.iterations = null
     p5.drawNeighbors = true
+    p5.drawNeighborsGradient = true
     p5.drawGrid = true
 
     let cols = Object.keys(p5.start).length
@@ -908,7 +907,7 @@ onBeforeMount(() => {
         0,
         spacingCells * cellSize,
         rows * cellSize + 1,
-        p5.color(255, 255, 255, 255),
+        p5.drawNeighborsGradient ? p5.color(255, 255, 255, 255) : p5.color(0, 0, 0, 128),
         p5.color(0, 0, 0, 128)
       )
       // right
@@ -918,7 +917,7 @@ onBeforeMount(() => {
         spacingCells * cellSize,
         rows * cellSize + 1,
         p5.color(0, 0, 0, 128),
-        p5.color(255, 255, 255, 255)
+        p5.drawNeighborsGradient ? p5.color(255, 255, 255, 255) : p5.color(0, 0, 0, 128)
       )
     }
 
@@ -982,6 +981,7 @@ onBeforeMount(() => {
         grid[i] = Array(cols).fill(0)
       }
       p5.background(255)
+      p5.windowResized()
       generateNextState()
       drawGrid()
       p5.noLoop()
@@ -1061,6 +1061,17 @@ watch(
   (newEdgeValue) => {
     if (p5Instance) {
       p5Instance.edgeValue = toRaw(newEdgeValue)
+      p5Instance.loop()
+    }
+  },
+  { deep: true }
+)
+watch(
+  options,
+  (newOptionsValue) => {
+    if (p5Instance) {
+      p5Instance.drawNeighbors = toRaw(newOptionsValue)?.showNeighbours
+      p5Instance.drawNeighborsGradient = toRaw(newOptionsValue)?.gradientNeighbours
       p5Instance.loop()
     }
   },

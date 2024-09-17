@@ -18,5 +18,7 @@
   "filled": "Fixed",
   "validLut": "Valid LUT",
   "invalidLut": "Invalid LUT",
-  "useStates": "Use tape states"
+  "useStates": "Use tape states",
+  "showNeighbours": "Show neighbours cells",
+  "gradientNeighbours": "Use gradient"
 }

@@ -18,5 +18,7 @@
   "filled": "Zamknięte pochłaniające",
   "validLut": "Porawny LUT",
   "invalidLut": "Niepoprawny LUT",
-  "useStates": "Użyj stanów taśmy"
+  "useStates": "Użyj stanów taśmy",
+  "showNeighbours": "Wyświetl sąsiadujące komórki",
+  "gradientNeighbours": "Użyj gradientu"
 }
