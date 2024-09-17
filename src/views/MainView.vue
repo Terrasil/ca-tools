@@ -361,6 +361,7 @@ import Dialog from 'primevue/dialog'
 import Textarea from 'primevue/textarea'
 import FileUpload from 'primevue/fileupload'
 import Checkbox from 'primevue/checkbox'
+import isNcca from '@/utils/tests'
 
 // @ts-ignore
 import p5 from 'p5'
@@ -482,6 +483,7 @@ const randomAllRule = () => {
   allRule.value = randomRule
   changeAllRules({ value: randomRule })
 }
+
 const randomAllState = () => {
   const randomState = Math.floor(Math.random() * statesValue.value)
   allState.value = randomState
