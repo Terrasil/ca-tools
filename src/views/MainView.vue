@@ -242,20 +242,34 @@
           </div>
         </Fieldset>
         <Fieldset :legend="$t('properties')">
-          <span :class="wlasnosci.zachowanieSumy ? 'text-green-400' : 'text-red-400'"
-            ><i class="pi mr-1" :class="wlasnosci.zachowanieSumy ? 'pi-check' : 'pi-times'"></i
-            >{{ $t('reversibe') }}</span
-          ><br />
-          <span :class="wlasnosci.zachowanieSumy ? 'text-green-400' : 'text-red-400'" title="test"
-            ><i class="pi mr-1" :class="wlasnosci.zachowanieSumy ? 'pi-check' : 'pi-times'"></i
-            >{{ $t('ncca') }}</span
-          ><br />
-          <span :class="wlasnosci.zachowanieSumy ? 'text-green-400' : 'text-red-400'"
-            ><i class="pi mr-1" :class="wlasnosci.zachowanieSumy ? 'pi-check' : 'pi-times'"></i
-            >{{ $t('reversibeNcca') }}</span
-          ><br />
-          <span :class="wlasnosci.zachowanieSumy ? 'text-green-400' : 'text-red-400'"
-            ><i class="pi mr-1" :class="wlasnosci.zachowanieSumy ? 'pi-check' : 'pi-times'"></i
+          <div>
+            <span v-if="isCalculateingNCCA" class="text-primary-400"
+              ><i class="mr-1 pi pi-spin pi-spinner"></i>{{ $t('reversibe') }}</span
+            >
+            <span v-else :class="properties.ncca ? 'text-green-400' : 'text-red-400'"
+              ><i class="pi mr-1" :class="properties.ncca ? 'pi-check' : 'pi-times'"></i
+              >{{ $t('ncca') }}</span
+            >
+          </div>
+          <div>
+            <span v-if="isCalculateingReverse" class="text-primary-400"
+              ><i class="mr-1 pi pi-spin pi-spinner"></i>{{ $t('reversibeNcca') }}</span
+            >
+            <span v-else :class="properties.reversableNcca ? 'text-green-400' : 'text-red-400'"
+              ><i class="pi mr-1" :class="properties.reversableNcca ? 'pi-check' : 'pi-times'"></i
+              >{{ $t('reversibeNcca') }}</span
+            ><br />
+            <div v-if="properties.reversableNcca">
+              <span class="text-green-400"
+                ><i class="mr-1 ml-4">Rule: {{ properties.reversableNcca?.rule }}</i></span
+              ><br />
+              <span class="text-green-400"
+                ><i class="mr-1 ml-4">LUT: {{ properties.reversableNcca?.lut }}</i></span
+              >
+            </div>
+          </div>
+          <span :class="properties.periodic ? 'text-green-400' : 'text-red-400'"
+            ><i class="pi mr-1" :class="properties.periodic ? 'pi-check' : 'pi-times'"></i
             >{{ $t('periodic') }}</span
           ><br />
         </Fieldset>
@@ -361,7 +375,8 @@ import Dialog from 'primevue/dialog'
 import Textarea from 'primevue/textarea'
 import FileUpload from 'primevue/fileupload'
 import Checkbox from 'primevue/checkbox'
-import isNcca from '@/utils/tests'
+import isNcca from '@/utils/ncca'
+import isRevertable from '@/utils/revert'
 
 // @ts-ignore
 import p5 from 'p5'
@@ -372,6 +387,8 @@ import { instance } from '@viz-js/viz'
 
 const i18n: any = useI18n()
 
+const isCalculateingNCCA = ref(true)
+const isCalculateingReverse = ref(true)
 const numberValue = ref(8)
 const iterationValue = ref(10)
 const statesValue = ref(2)
@@ -443,11 +460,14 @@ const toggleGraphDialog = () => {
 const cyContainer = ref(null)
 const graph = ref(null)
 
-const wlasnosci = ref({
-  zachowanieSumy: false,
-  odwracalnosc: false,
-  replikacja: false,
-  okresowosc: false
+const properties = ref<{
+  ncca: boolean
+  reversableNcca: boolean | { rule: number; lut: string }
+  periodic: boolean
+}>({
+  ncca: false,
+  reversableNcca: false,
+  periodic: false
 })
 
 const selectedCountry = ref({ name: 'Polski', code: 'PL', value: 'pl' })
@@ -476,6 +496,26 @@ const updateLocale = (lang: any) => {
 
 const updateEdgeType = (edge: any) => {
   edgeTypeValue.value = edge.value.value
+}
+
+const calculateNCCA = async () => {
+  isCalculateingNCCA.value = true
+  return new Promise(async (resolve) => {
+    isCalculateingNCCA.value = false
+    properties.value.ncca = await isNcca(Object.values(ruleInputs.value))
+    resolve(properties.value.ncca)
+  })
+}
+const calculateReverse = async (newRuleInputs: { [key: number]: number } | null = null) => {
+  isCalculateingReverse.value = true
+  return new Promise(async (resolve) => {
+    isCalculateingReverse.value = false
+    const rules = newRuleInputs ?? ruleInputs.value
+    if (Object.values(rules).every((value) => value === Object.values(rules)[0]))
+      properties.value.reversableNcca = await isRevertable(rules[0], statesValue.value)
+    else properties.value.reversableNcca = false
+    resolve(properties.value.reversableNcca)
+  })
 }
 
 const randomAllRule = () => {
@@ -1015,6 +1055,8 @@ watch(
       p5Instance.rules = toRaw(newRuleInputs)
       p5Instance.loop()
     }
+    calculateReverse(newRuleInputs)
+    calculateNCCA()
   },
   { deep: true }
 )
@@ -1045,6 +1087,8 @@ watch(
       p5Instance.states = toRaw(newStatesValue)
       p5Instance.loop()
     }
+    calculateNCCA()
+    calculateReverse()
   },
   { deep: true }
 )

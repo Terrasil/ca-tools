@@ -11,7 +11,7 @@
   "properties": "Properties",
   "reversibe": "Reversible k-ary",
   "ncca": "k-ary NCCA",
-  "reversibeNcca": "Reversible k-ary NCCA",
+  "reversibeNcca": "Reversible k-ary",
   "periodic": "Periodic",
   "endless": "Periodic",
   "mirror": "Mirrored",
