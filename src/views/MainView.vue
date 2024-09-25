@@ -243,6 +243,7 @@
         </Fieldset>
         <Fieldset :legend="$t('properties')">
           <div>
+            <!--Dodać tutaj wyłaczenie dla k>2-->
             <span v-if="isCalculateingNCCA" class="text-primary-400"
               ><i class="mr-1 pi pi-spin pi-spinner"></i>{{ $t('reversibe') }}</span
             >
@@ -272,6 +273,7 @@
             ><i class="pi mr-1" :class="properties.periodic ? 'pi-check' : 'pi-times'"></i
             >{{ $t('periodic') }}</span
           ><br />
+          {{ isCyclic(allRule, statesValue) }}
         </Fieldset>
       </div>
       <Splitter>
@@ -377,6 +379,7 @@ import FileUpload from 'primevue/fileupload'
 import Checkbox from 'primevue/checkbox'
 import isNcca from '@/utils/ncca'
 import isRevertable from '@/utils/revert'
+import isCyclic from '@/utils/cyclic'
 
 // @ts-ignore
 import p5 from 'p5'
