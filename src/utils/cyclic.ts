@@ -3,24 +3,13 @@ export default function isCyclic(ruleNumber: number, k: number) {
   const ruleTable = generateTable(ruleNumber, k)
   console.log(ruleTable)
   if (ruleTable == false) return false
-  console.log(convertObjectToKeyValue(ruleTable as object))
   const spatialPeriod = 2
   const periodicSolutions = findPeriodicSolutions(
-    convertObjectToKeyValue(ruleTable as object),
+    ruleTable as { [key: string]: any },
     spatialPeriod
   )
   console.log(periodicSolutions)
   return periodicSolutions
-}
-
-function convertObjectToKeyValue(obj: { [key: string]: any }): { [key: string]: string } {
-  let result: { [key: string]: string } = {}
-  // Loop through the entries of the object
-  Object.entries(obj).forEach(([key, value]) => {
-    // Convert each value to a string and assign it back
-    result[key] = String(value)
-  })
-  return result
 }
 
 function generateTable(ruleNumber: number, k: number) {
