@@ -41,7 +41,7 @@ export default async function isRevertable(ruleNumber: number, k: number) {
   console.log(inverseG)
 
   if (inverseG === false) {
-    return false
+    return undefined
   } else {
     return inverseG // This is a function representing the inverse local rule
   }

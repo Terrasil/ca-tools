@@ -262,7 +262,7 @@
             ><br />
             <div v-if="properties.reversableNcca">
               <span class="text-green-400"
-                ><i class="mr-1 ml-4">Rule: {{ properties.reversableNcca?.rule }}</i></span
+                ><i class="mr-1 ml-4">{{ $t('rule') }}: {{ properties.reversableNcca?.rule }}</i></span
               ><br />
               <span class="text-green-400"
                 ><i class="mr-1 ml-4">LUT: {{ properties.reversableNcca?.lut }}</i></span
@@ -465,11 +465,11 @@ const graph = ref(null)
 
 const properties = ref<{
   ncca: boolean
-  reversableNcca: boolean | { rule: number; lut: string }
+  reversableNcca: undefined | { rule: number; lut: string }
   periodic: boolean
 }>({
   ncca: false,
-  reversableNcca: false,
+  reversableNcca: undefined,
   periodic: false
 })
 
@@ -516,7 +516,7 @@ const calculateReverse = async (newRuleInputs: { [key: number]: number } | null 
     const rules = newRuleInputs ?? ruleInputs.value
     if (Object.values(rules).every((value) => value === Object.values(rules)[0]))
       properties.value.reversableNcca = await isRevertable(rules[0], statesValue.value)
-    else properties.value.reversableNcca = false
+    else properties.value.reversableNcca = undefined
     resolve(properties.value.reversableNcca)
   })
 }
@@ -817,6 +817,7 @@ const downloadLUT = async () => {
     }
 
     // Otwórz okno dialogowe "Zapisz jako"
+    // @ts-ignore funkcja wbudowana w przeglądarkę
     const handle = await showSaveFilePicker(options)
 
     // Stwórz plik w pamięci
