@@ -1,18 +1,38 @@
 # cellular-automata-tools
 
-This template should help get you started developing with Vue 3 in Vite.
+Narzędzia do analizy własności k-arnych automatów komórkowych takich jak, zachowywanie sumy stanów (ang. Number Conserving), owracalność NCCA oraz cykliczność/okresowość przestrzenno czasowa.
 
-## Recommended IDE Setup
+#### NCCA 
 
-[VSCode](https://code.visualstudio.com/) + [Volar](https://marketplace.visualstudio.com/items?itemName=Vue.volar) (and disable Vetur).
+Wykorzytsanie alkorytmu do weryfikacji non-uniform NCCA na potrzeby ENCCA.
 
-## Type Support for `.vue` Imports in TS
+#### Reversibility
 
-TypeScript cannot handle type information for `.vue` imports by default, so we replace the `tsc` CLI with `vue-tsc` for type checking. In editors, we need [Volar](https://marketplace.visualstudio.com/items?itemName=Vue.volar) to make the TypeScript language service aware of `.vue` types.
+Badanie odwracalności automatu komórkowego z jednoczesnym podaniem odwrotnego CA.
 
-## Customize configuration
+#### Cyclic / Periodic
 
-See [Vite Configuration Reference](https://vitejs.dev/config/).
+Wykrywanie czyklicznhych struktur w przestrzeni automatu oraz w przejściach
+
+#### Funkcjonalności
+- Zmiana długości taśmy
+- Zmiana ilośc stanów
+- Zmiana ilośc symulowanch iteracji
+- Zmiana typu sąsiedztwa (periodyczne, odbijające i pochłaniające)
+- Import automatu z kodu LUT i z pliku tekstowego (również z stanem początkowym taśmy)
+- Eksport automatu do kodu LUT i do pliku tekstowego (również z stanem początkowym taśmy)
+- Obsługa języka polskiego i angielskiego
+- Opcje:
+  - Wyświetlanie granic taśmy
+  - Wyświtlanie granicy taśmy z gradientem (fadeout)
+- Ustawianie zasady automatu dla całej taśmy
+- Ustawienie zasady dla poszczególnych komórek taśmy
+- Losowanie zasad komórek taśmy
+- Ustawienie wartości początkowej dla wszystkich komórek
+- Ustawienie wartości początkowych dla poszczególnych komórek
+- Losowe ustawienie wartości poczatkowej dla komórek
+- Wyświetlanie symulowanych iteracji
+- Wyświetlanie grafu de Burjina
 
 ## Project Setup
 
