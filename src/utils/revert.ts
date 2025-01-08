@@ -38,7 +38,7 @@ export default async function isRevertable(ruleNumber: number, k: number) {
   // Now use the previously defined generateInverseCA function
   const inverseG = generateInverseCA(f, outputs, k)
 
-  console.log(inverseG)
+  //console.log(inverseG)
 
   if (inverseG === false) {
     return false

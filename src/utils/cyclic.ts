@@ -1,14 +1,14 @@
 export default function isCyclic(ruleNumber: number, k: number) {
   // Przykład użycia
   const ruleTable = generateTable(ruleNumber, k)
-  console.log(ruleTable)
+  //console.log(ruleTable)
   if (ruleTable == false) return false
   const spatialPeriod = 2
   const periodicSolutions = findPeriodicSolutions(
     ruleTable as { [key: string]: any },
     spatialPeriod
   )
-  console.log(periodicSolutions)
+  //console.log(periodicSolutions)
   return periodicSolutions
 }
 

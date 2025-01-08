@@ -505,7 +505,7 @@ const calculateNCCA = async () => {
   isCalculateingNCCA.value = true
   return new Promise(async (resolve) => {
     isCalculateingNCCA.value = false
-    properties.value.ncca = await isNcca(Object.values(ruleInputs.value))
+    properties.value.ncca = await isNcca(Object.values(ruleInputs.value), statesValue.value)
     resolve(properties.value.ncca)
   })
 }
