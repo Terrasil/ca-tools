@@ -1,15 +1,9 @@
 export default async function isRevertable(ruleNumber: number, k: number) {
-  // Input: ruleNumber - integer representing the local rule f
-  //        k - number of states
-  // Output: inverseG - inverse local rule function or false if not reversible
-
-  // First, reconstruct the local rule f from the rule number
   const totalRules = Math.pow(k, Math.pow(k, 3))
   if (ruleNumber < 0 || ruleNumber >= totalRules) {
     throw new Error(`Invalid rule number. Must be between 0 and ${totalRules - 1}.`)
   }
 
-  // Generate the list of all possible inputs for the local rule f
   const inputs = []
   for (let a = 0; a < k; a++) {
     for (let b = 0; b < k; b++) {
@@ -19,7 +13,6 @@ export default async function isRevertable(ruleNumber: number, k: number) {
     }
   }
 
-  // Decode the rule number to get the outputs for each input combination
   const outputs: number[] = []
   const base = k
   let number = ruleNumber
@@ -30,24 +23,19 @@ export default async function isRevertable(ruleNumber: number, k: number) {
     number = Math.floor(number / base)
   }
 
-  // Create the local rule f as a function
   const f = function (rule: Array<number>, left: number, center: number, right: number) {
     const index = left * k * k + center * k + right
     return rule[index]
   }
-  // Now use the previously defined generateInverseCA function
   const inverseG = generateInverseCA(f, outputs, k)
 
-  //console.log(inverseG)
-
   if (inverseG === false) {
-    return false
+    return undefined
   } else {
-    return inverseG // This is a function representing the inverse local rule
+    return inverseG
   }
 }
 
-// Generate inverse NCCA
 function generateInverseCA(
   f: (rule: Array<number>, left: number, center: number, right: number) => number,
   rule: Array<number>,
@@ -66,7 +54,6 @@ function generateInverseCA(
     const g = new Map<string, number>()
     let conflict = false
 
-    // Step 3: For every configuration x ∈ Q^{2r+1}
     const totalConfigs = Math.pow(k, n)
 
     for (let idx = 0; idx < totalConfigs; idx++) {
@@ -74,7 +61,7 @@ function generateInverseCA(
       const y = F(x, f, rule, k)
 
       const yKey = configToKey(y)
-      const centerIndex = r // Middle of the configuration
+      const centerIndex = r
       const value = x[centerIndex]
 
       if (!g.has(yKey)) {
@@ -83,16 +70,15 @@ function generateInverseCA(
         const existingValue = g.get(yKey)
         if (existingValue !== value) {
           conflict = true
-          break // Conflict found, increase r and try again
+          break
         }
       }
     }
 
     if (conflict) {
-      continue // Go back to step 2
+      continue
     }
 
-    // Step 4: Verify that G(F(x)) == x and F(G(y)) == y for configurations of length 2r+3
     const nCheck = 2 * r + 3
     const totalConfigsCheck = Math.pow(k, nCheck)
 
@@ -108,8 +94,6 @@ function generateInverseCA(
     return arrayToCellularAutomata(gRule, k)
   }
 }
-
-// Helper functions
 function idxToConfig(idx: number, length: number, k: number) {
   const config = new Array(length)
   for (let i = length - 1; i >= 0; i--) {
@@ -124,18 +108,16 @@ function configToKey(config: any[]) {
 }
 
 function mapToArray(mapping: Map<string, number>, k: number) {
-  const size = 3 // Neighborhood size is 3
-  const arraySize = Math.pow(k, size) // Total possible combinations (k^size)
-  const ruleArray = new Array(arraySize).fill(0) // Initialize array with zeros
-  // Convert a neighborhood string like "1,1,0" into its base-k index
+  const size = 3
+  const arraySize = Math.pow(k, size)
+  const ruleArray = new Array(arraySize).fill(0)
   function neighborhoodToIndex(neighborhood: string) {
-    const cells = neighborhood.split(',').map(Number) // Split the string and convert to numbers
-    return cells.reduce((index, cellValue) => index * k + cellValue, 0) // Convert to base-k index
+    const cells = neighborhood.split(',').map(Number)
+    return cells.reduce((index, cellValue) => index * k + cellValue, 0)
   }
-  // Populate the rule array
   mapping.forEach((value, key) => {
-    const index = neighborhoodToIndex(key) // Get the base-k index from the key
-    ruleArray[index] = value // Set the value at the corresponding index in the array
+    const index = neighborhoodToIndex(key)
+    ruleArray[index] = value
   })
   return ruleArray
 }
@@ -172,11 +154,8 @@ function F(
   return y
 }
 
-// Generate CA data
 function arrayToCellularAutomata(arr: number[], k: number): { lut: string; rule: number } {
-  // Reverse the array and join into a binary string for the LUT
   let lut = arr.reverse().join('')
-  // Convert the binary string to a decimal rule
   let rule = parseInt(lut, k)
   return { lut, rule }
 }
