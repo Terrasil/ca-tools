@@ -243,39 +243,84 @@
         </Fieldset>
         <Fieldset :legend="$t('properties')">
           <div>
-            <!--Dodać tutaj wyłaczenie dla k>2-->
             <span v-if="isCalculateingNCCA" class="text-primary-400"
-              ><i class="mr-1 pi pi-spin pi-spinner"></i>{{ $t('reversibe') }}</span
+              ><i class="mr-1 pi pi-spin pi-spinner"></i>{{ $t('ncca') }}</span
             >
             <span v-else :class="properties.ncca ? 'text-green-400' : 'text-red-400'"
               ><i class="pi mr-1" :class="properties.ncca ? 'pi-check' : 'pi-times'"></i
               >{{ $t('ncca') }}</span
             >
           </div>
-          <div>
-            <span v-if="isCalculateingReverse" class="text-primary-400"
-              ><i class="mr-1 pi pi-spin pi-spinner"></i>{{ $t('reversibeNcca') }}</span
-            >
-            <span v-else :class="properties.reversableNcca ? 'text-green-400' : 'text-red-400'"
-              ><i class="pi mr-1" :class="properties.reversableNcca ? 'pi-check' : 'pi-times'"></i
-              >{{ $t('reversibeNcca') }}</span
-            ><br />
-            <div v-if="properties.reversableNcca">
-              <span class="text-green-400"
-                ><i class="mr-1 ml-4"
-                  >{{ $t('rule') }}: {{ properties.reversableNcca?.rule }}</i
-                ></span
-              ><br />
-              <span class="text-green-400"
-                ><i class="mr-1 ml-4">LUT: {{ properties.reversableNcca?.lut }}</i></span
+          <div
+            v-if="
+              Object.values(ruleInputs).every((value) => value === Object.values(ruleInputs)[0])
+            "
+          >
+            <div>
+              <span v-if="isCalculateingReverse" class="text-primary-400"
+                ><i class="mr-1 pi pi-spin pi-spinner"></i>{{ $t('reversibeNcca') }}</span
               >
+              <span v-else :class="properties.reversableNcca ? 'text-green-400' : 'text-red-400'"
+                ><i class="pi mr-1" :class="properties.reversableNcca ? 'pi-check' : 'pi-times'"></i
+                >{{ $t('reversibeNcca') }}</span
+              ><br />
+              <div v-if="properties.reversableNcca">
+                <span class="text-green-400"
+                  ><i class="mr-1 ml-4"
+                    >{{ $t('rule') }}: {{ properties.reversableNcca?.rule }}</i
+                  ></span
+                ><br />
+                <span class="text-green-400"
+                  ><i class="mr-1 ml-4">LUT: {{ properties.reversableNcca?.lut }}</i></span
+                >
+              </div>
+            </div>
+            <div>
+              <span v-if="isCalculateingCyclic" class="text-primary-400"
+                ><i class="mr-1 pi pi-spin pi-spinner"></i>{{ $t('periodic') }}</span
+              >
+              <span
+                v-else
+                :class="properties.cyclic.grids?.length ? 'text-green-400' : 'text-red-400'"
+              >
+                <i
+                  class="pi mr-1"
+                  :class="properties.cyclic.grids?.length ? 'pi-check' : 'pi-times'"
+                ></i
+                >{{ $t('periodic') }} </span
+              ><br />
+              <div v-if="properties.cyclic.grids?.length">
+                <div class="flex">
+                  <div>
+                    <span class="text-green-400"
+                      ><i class="mr-1 ml-4">σ = {{ properties.cyclic.sigma }}</i></span
+                    ><br />
+                    <span class="text-green-400"
+                      ><i class="mr-1 ml-4">|T| = {{ properties.cyclic.grids?.length }}</i></span
+                    ><br />
+                  </div>
+                  <div class="flex-1 align-content-center"></div>
+                  <div class="align-content-center">
+                    <Button
+                      v-if="properties.cyclic.grids?.length"
+                      class="roll-button align-content-start text-xl"
+                      icon="pi pi-search"
+                      severity="secondary"
+                      outlined
+                      title="Podgląd krat T"
+                      @click="toggleTilesDialog"
+                    />
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
-          <span :class="properties.periodic ? 'text-green-400' : 'text-red-400'"
-            ><i class="pi mr-1" :class="properties.periodic ? 'pi-check' : 'pi-times'"></i
-            >{{ $t('periodic') }}</span
-          ><br />
-          {{ isCyclic(startValueInputs, allRule, statesValue) }}
+          <div v-else>
+            <span class="text-gray-400"
+              ><i class="mr-1 pi pi-minus"></i>{{ $t('reversibeNcca') }}</span
+            ><br />
+            <span class="text-gray-400"><i class="mr-1 pi pi-minus"></i>{{ $t('periodic') }}</span>
+          </div>
         </Fieldset>
       </div>
       <Splitter>
@@ -362,6 +407,24 @@
       />
     </div>
   </Dialog>
+
+  <Dialog
+    v-model:visible="visibleTilesDialog"
+    modal
+    :style="{ maxWidth: '80vw', maxHeight: '80vh', overflow: 'hidden' }"
+    :header="'Kraty T dla σ = ' + properties.cyclic.sigma"
+  >
+    <div class="flex gap-2 p-2">
+      <div v-for="tile in properties.cyclic.grids" class="w-max">
+        <div class="flex justify-content-center">
+          <span>𝜏 = {{ tile.length }}</span>
+        </div>
+        <div v-for="(row, rowIndex) in tile" :key="rowIndex" class="flex">
+          <div v-for="(value, colIndex) in row" :key="colIndex" :style="getCellStyle(value)"></div>
+        </div>
+      </div>
+    </div>
+  </Dialog>
 </template>
 
 <script setup lang="ts">
@@ -394,6 +457,7 @@ const i18n: any = useI18n()
 
 const isCalculateingNCCA = ref(true)
 const isCalculateingReverse = ref(true)
+const isCalculateingCyclic = ref(true)
 const numberValue = ref(8)
 const iterationValue = ref(10)
 const statesValue = ref(2)
@@ -435,6 +499,8 @@ const toggleExportDialog = () => {
   generateExportLUT()
   visibleExportDialog.value = true
 }
+const visibleTilesDialog = ref(false)
+const toggleTilesDialog = () => (visibleTilesDialog.value = true)
 const visibleGraphDialog = ref(false)
 const toggleGraphDialog = () => {
   const k = statesValue.value // Number of states allRule
@@ -469,10 +535,12 @@ const properties = ref<{
   ncca: boolean
   reversableNcca: undefined | { rule: number; lut: string }
   periodic: boolean
+  cyclic: { sigma: number; grids: string[][] | undefined }
 }>({
   ncca: false,
   reversableNcca: undefined,
-  periodic: false
+  periodic: false,
+  cyclic: { sigma: 0, grids: undefined }
 })
 
 const selectedCountry = ref({ name: 'Polski', code: 'PL', value: 'pl' })
@@ -506,20 +574,32 @@ const updateEdgeType = (edge: any) => {
 const calculateNCCA = async () => {
   isCalculateingNCCA.value = true
   return new Promise(async (resolve) => {
-    isCalculateingNCCA.value = false
     properties.value.ncca = await isNcca(Object.values(ruleInputs.value), statesValue.value)
+    isCalculateingNCCA.value = false
     resolve(properties.value.ncca)
   })
 }
 const calculateReverse = async (newRuleInputs: { [key: number]: number } | null = null) => {
   isCalculateingReverse.value = true
   return new Promise(async (resolve) => {
-    isCalculateingReverse.value = false
     const rules = newRuleInputs ?? ruleInputs.value
     if (Object.values(rules).every((value) => value === Object.values(rules)[0]))
       properties.value.reversableNcca = await isRevertable(rules[0], statesValue.value)
     else properties.value.reversableNcca = undefined
+    isCalculateingReverse.value = false
     resolve(properties.value.reversableNcca)
+  })
+}
+const calculateCyclic = async (newStartValueInputs: { [key: number]: number } | null = null) => {
+  isCalculateingCyclic.value = true
+  return new Promise(async (resolve) => {
+    const rules = ruleInputs.value
+    const states = newStartValueInputs ?? startValueInputs.value
+    if (Object.values(rules).every((value) => value === Object.values(rules)[0]))
+      properties.value.cyclic = await isCyclic(states, rules[0], statesValue.value)
+    else properties.value.cyclic = { sigma: 0, grids: undefined }
+    isCalculateingCyclic.value = false
+    resolve(properties.value.cyclic)
   })
 }
 
@@ -727,13 +807,21 @@ function generateLUT(rule: number, states: number, neighbours: number) {
   return lut
 }
 
-const generateColors = () => {
-  // Generowanie wartości od 0 do 1 z krokiem 0.01
-  const values = d3.range(0, 1.01, 0.01)
-  // Skala kolorów (gradient)
-  const colorScale = d3.scaleSequential(d3.interpolateViridis).domain([0, 1])
-  // Przekształcenie wartości na kolory
-  console.log(values.map((value: any) => colorScale(value)))
+function getCellStyle(value) {
+  const maxValue = statesValue.value - 1
+  const grayScale = Math.floor((value / maxValue) * 255)
+  const backgroundColor = `rgb(${255 - grayScale}, ${255 - grayScale}, ${255 - grayScale})`
+  return {
+    backgroundColor,
+    color: 'white',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: '50px',
+    height: '50px',
+    fontSize: '14px',
+    border: '1px solid #777'
+  }
 }
 
 // Generate data for the graph
@@ -1063,6 +1151,7 @@ watch(
     }
     calculateReverse(newRuleInputs)
     calculateNCCA()
+    calculateCyclic()
   },
   { deep: true }
 )
@@ -1073,6 +1162,7 @@ watch(
       p5Instance.start = toRaw(newStartValueInputs)
       p5Instance.loop()
     }
+    calculateCyclic(newStartValueInputs)
   },
   { deep: true }
 )
@@ -1095,6 +1185,7 @@ watch(
     }
     calculateNCCA()
     calculateReverse()
+    calculateCyclic()
   },
   { deep: true }
 )
