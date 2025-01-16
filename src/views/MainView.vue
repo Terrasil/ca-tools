@@ -956,7 +956,7 @@ function generateCircularLayout(edges: any[]) {
   return dotOutput
 }
 
-onBeforeMount(() => {
+onBeforeMount(async () => {
   for (let i = 0; i < numberValue.value; i++) {
     ruleInputs.value[i] = 0
     startValueInputs.value[i] = 0

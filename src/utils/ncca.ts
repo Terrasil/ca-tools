@@ -1,4 +1,8 @@
 export default async function isNcca(rules: Array<number>, k: number) {
+  while (rules.length < 3) {
+    // poprawia bład gdy zamało regół
+    rules.push(rules[0])
+  }
   const n = rules.length
   for (let x = 0; x < k; ++x) {
     for (let y = 0; y < k; ++y) {
@@ -18,6 +22,7 @@ export default async function isNcca(rules: Array<number>, k: number) {
 
 function f(x: number, y: number, z: number, rule: number, k: number) {
   const index = x * k * k + y * k + z
+  console.log(Math.floor(rule / Math.pow(k, index)) % k)
   return Math.floor(rule / Math.pow(k, index)) % k
 }
 

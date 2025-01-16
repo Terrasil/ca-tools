@@ -86,6 +86,7 @@ function findCycles(graph: { nodes: string[]; edges: { from: string; to: string 
     visited.add(node)
     stack.add(node)
     path.push(node)
+    if (adjacencyList[node] === undefined) return
     for (const neighbor of adjacencyList[node]) {
       dfs(neighbor, path)
     }
