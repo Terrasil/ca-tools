@@ -1043,8 +1043,8 @@ onBeforeMount(async () => {
         0,
         spacingCells * cellSize,
         rows * cellSize + 1,
-        p5.drawNeighborsGradient ? p5.color(255, 255, 255, 255) : p5.color(0, 0, 0, 128),
-        p5.color(0, 0, 0, 128)
+        p5.drawNeighborsGradient ? p5.color(255, 255, 255, 255) : p5.color(192, 192, 192, 128),
+        p5.color(192, 192, 192, 128)
       )
       // right
       drawGradient(
@@ -1052,8 +1052,8 @@ onBeforeMount(async () => {
         0,
         spacingCells * cellSize,
         rows * cellSize + 1,
-        p5.color(0, 0, 0, 128),
-        p5.drawNeighborsGradient ? p5.color(255, 255, 255, 255) : p5.color(0, 0, 0, 128)
+        p5.color(192, 192, 192, 128),
+        p5.drawNeighborsGradient ? p5.color(255, 255, 255, 255) : p5.color(192, 192, 192, 128)
       )
     }
 
