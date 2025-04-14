@@ -1090,7 +1090,7 @@ onBeforeMount(async () => {
           't' + toSubscript(y + 1),
           cellSize / 4,
           (spacingCells - 1) * cellSize + cellSize / 2,
-          (cellSize / 4) * 3 + cellSize * y
+          (cellSize / 8) * 7 + cellSize * y
         )
       }
     }
