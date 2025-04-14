@@ -994,9 +994,25 @@ onBeforeMount(async () => {
       p5.drawingContext.fillRect(x, y, w, h)
       p5.drawingContext.fillStyle = saveFillStyle
     }
+    function drawTextWithShadow(txt, textSize, x, y) {
+      p5.textSize(textSize)
+      p5.stroke(255)
+      p5.strokeWeight(textSize / 8)
+      p5.fill(0)
+      p5.text(txt, x, y)
+
+      p5.noStroke()
+    }
+    const subscriptDigits = ['₀', '₁', '₂', '₃', '₄', '₅', '₆', '₇', '₈', '₉']
+    function toSubscript(num) {
+      return String(num)
+        .split('')
+        .map((d) => subscriptDigits[parseInt(d)])
+        .join('')
+    }
 
     function drawGrid() {
-      let spacingCells = p5.drawNeighbors ? Math.ceil(cols / 2) : 0
+      let spacingCells = p5.drawNeighbors ? Math.ceil(cols / 2) : 1
       let cellSize = p5.width / (cols + spacingCells * 2)
       for (let y = 0; y < rows; y++) {
         for (let x = 0; x < cols; x++) {
@@ -1004,57 +1020,79 @@ onBeforeMount(async () => {
           p5.fill(colorValue)
           if (p5.drawGrid) p5.stroke(127)
           else p5.noStroke(127)
-          p5.rect((x + spacingCells) * cellSize, y * cellSize, cellSize, cellSize)
+          p5.rect((x + spacingCells) * cellSize, y * cellSize + cellSize / 4, cellSize, cellSize)
         }
       }
-
       // draw neighbors
-      if (!p5.drawNeighbors) return
-      // left
-      for (let y = 0; y < rows; y++) {
-        for (let x = 0; x < spacingCells; x++) {
-          let colorValue = 0
-          if (p5.edge === 0)
-            colorValue = 255 - (grid[y][cols - spacingCells + x] / (p5.states - 1)) * 255
-          if (p5.edge === 1) colorValue = 255 - (grid[y][spacingCells - x] / (p5.states - 1)) * 255
-          if (p5.edge === 2) colorValue = 255 - (p5.edgeValue / (p5.states - 1)) * 255
-          p5.fill(colorValue)
-          if (p5.drawGrid) p5.stroke(127)
-          else p5.noStroke(127)
-          p5.rect(x * cellSize, y * cellSize, cellSize, cellSize)
+      if (p5.drawNeighbors) {
+        // left
+        for (let y = 0; y < rows; y++) {
+          for (let x = 0; x < spacingCells; x++) {
+            let colorValue = 0
+            if (p5.edge === 0)
+              colorValue = 255 - (grid[y][cols - spacingCells + x] / (p5.states - 1)) * 255
+            if (p5.edge === 1)
+              colorValue = 255 - (grid[y][spacingCells - x] / (p5.states - 1)) * 255
+            if (p5.edge === 2) colorValue = 255 - (p5.edgeValue / (p5.states - 1)) * 255
+            p5.fill(colorValue)
+            if (p5.drawGrid) p5.stroke(127)
+            else p5.noStroke(127)
+            p5.rect(x * cellSize, y * cellSize + cellSize / 4, cellSize, cellSize)
+          }
         }
-      }
-      // right
-      for (let y = 0; y < rows; y++) {
-        for (let x = 0; x < spacingCells; x++) {
-          let colorValue = 0
-          if (p5.edge === 0) colorValue = 255 - (grid[y][x] / (p5.states - 1)) * 255
-          if (p5.edge === 1) colorValue = 255 - (grid[y][cols - x - 1] / (p5.states - 1)) * 255
-          if (p5.edge === 2) colorValue = 255 - (p5.edgeValue / (p5.states - 1)) * 255
-          p5.fill(colorValue)
-          if (p5.drawGrid) p5.stroke(127)
-          else p5.noStroke(127)
-          p5.rect((cols + spacingCells + x) * cellSize, y * cellSize, cellSize, cellSize)
+        // right
+        for (let y = 0; y < rows; y++) {
+          for (let x = 0; x < spacingCells; x++) {
+            let colorValue = 0
+            if (p5.edge === 0) colorValue = 255 - (grid[y][x] / (p5.states - 1)) * 255
+            if (p5.edge === 1) colorValue = 255 - (grid[y][cols - x - 1] / (p5.states - 1)) * 255
+            if (p5.edge === 2) colorValue = 255 - (p5.edgeValue / (p5.states - 1)) * 255
+            p5.fill(colorValue)
+            if (p5.drawGrid) p5.stroke(127)
+            else p5.noStroke(127)
+            p5.rect(
+              (cols + spacingCells + x) * cellSize,
+              y * cellSize + cellSize / 4,
+              cellSize,
+              cellSize
+            )
+          }
         }
+        // left
+        drawGradient(
+          0,
+          cellSize / 4,
+          spacingCells * cellSize,
+          rows * cellSize + 1,
+          p5.drawNeighborsGradient ? p5.color(255, 255, 255, 255) : p5.color(192, 192, 192, 128),
+          p5.color(192, 192, 192, 128)
+        )
+        // right
+        drawGradient(
+          (cols + spacingCells) * cellSize,
+          cellSize / 4,
+          spacingCells * cellSize,
+          rows * cellSize + 1,
+          p5.color(192, 192, 192, 128),
+          p5.drawNeighborsGradient ? p5.color(255, 255, 255, 255) : p5.color(192, 192, 192, 128)
+        )
       }
-      // left
-      drawGradient(
-        0,
-        0,
-        spacingCells * cellSize,
-        rows * cellSize + 1,
-        p5.drawNeighborsGradient ? p5.color(255, 255, 255, 255) : p5.color(192, 192, 192, 128),
-        p5.color(192, 192, 192, 128)
-      )
-      // right
-      drawGradient(
-        (cols + spacingCells) * cellSize,
-        0,
-        spacingCells * cellSize,
-        rows * cellSize + 1,
-        p5.color(192, 192, 192, 128),
-        p5.drawNeighborsGradient ? p5.color(255, 255, 255, 255) : p5.color(192, 192, 192, 128)
-      )
+      for (let x = 0; x < cols; x++) {
+        drawTextWithShadow(
+          'c' + toSubscript(x + 1),
+          cellSize / 4,
+          spacingCells * cellSize + cellSize / 2 + cellSize * x,
+          cellSize / 6
+        )
+      }
+      for (let y = 0; y < rows; y++) {
+        drawTextWithShadow(
+          't' + toSubscript(y + 1),
+          cellSize / 4,
+          (spacingCells - 1) * cellSize + cellSize / 2,
+          (cellSize / 4) * 3 + cellSize * y
+        )
+      }
     }
 
     function generateRule(ruleNumber: { toString: (arg0: number) => string }) {
@@ -1097,7 +1135,7 @@ onBeforeMount(async () => {
       const parentWidth = parentElement?.clientWidth ?? 0
       rows = p5.iterations
       let spacingCells = p5.drawNeighbors ? Math.ceil(cols / 2) * 2 : 0
-      const parentHeight = 1 + (p5.width / (cols + spacingCells)) * rows
+      const parentHeight = 1 + (p5.width / (cols + spacingCells)) * (rows + 0.25)
       const canvas = p5.createCanvas(parentWidth, parentHeight)
       await nextTick()
       canvas.parent('vue-canvas')
@@ -1127,7 +1165,7 @@ onBeforeMount(async () => {
       const parentElement = document.getElementById('vue-canvas')
       const parentWidth = parentElement?.clientWidth ?? 0
       let spacingCells = p5.drawNeighbors ? Math.ceil(cols / 2) * 2 : 0
-      const parentHeight = 1 + (p5.width / (cols + spacingCells)) * rows
+      const parentHeight = 1 + (p5.width / (cols + spacingCells)) * (rows + 0.25)
       p5.resizeCanvas(parentWidth, parentHeight)
       p5.loop()
     }
