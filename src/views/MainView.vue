@@ -1078,39 +1078,41 @@ onBeforeMount(async () => {
         )
       }
 
-      if (p5.edge === 1) {
-        for (let x = cols / 2; x > 0; x--) {
-          drawTextWithShadow(
-            'c' + toSubscript(x),
-            cellSize / 4,
-            spacingCells * cellSize + cellSize / 2 - cellSize * x,
-            cellSize / 6
-          )
-        }
-        for (let x = cols / 2; x > 0; x--) {
-          drawTextWithShadow(
-            'c' + toSubscript(cols - x + 1),
-            cellSize / 4,
-            (cols + spacingCells - 1) * cellSize + cellSize / 2 + cellSize * x,
-            cellSize / 6
-          )
-        }
-      } else {
-        for (let x = cols / 2; x > 0; x--) {
-          drawTextWithShadow(
-            'c' + toSubscript(cols - x + 1),
-            cellSize / 4,
-            spacingCells * cellSize + cellSize / 2 - cellSize * x,
-            cellSize / 6
-          )
-        }
-        for (let x = cols / 2; x > 0; x--) {
-          drawTextWithShadow(
-            'c' + toSubscript(x),
-            cellSize / 4,
-            (cols + spacingCells - 1) * cellSize + cellSize / 2 + cellSize * x,
-            cellSize / 6
-          )
+      if (p5.drawNeighbors) {
+        if (p5.edge === 1) {
+          for (let x = cols / 2; x > 0; x--) {
+            drawTextWithShadow(
+              'c' + toSubscript(x),
+              cellSize / 4,
+              spacingCells * cellSize + cellSize / 2 - cellSize * x,
+              cellSize / 6
+            )
+          }
+          for (let x = cols / 2; x > 0; x--) {
+            drawTextWithShadow(
+              'c' + toSubscript(cols - x + 1),
+              cellSize / 4,
+              (cols + spacingCells - 1) * cellSize + cellSize / 2 + cellSize * x,
+              cellSize / 6
+            )
+          }
+        } else {
+          for (let x = cols / 2; x > 0; x--) {
+            drawTextWithShadow(
+              'c' + toSubscript(cols - x + 1),
+              cellSize / 4,
+              spacingCells * cellSize + cellSize / 2 - cellSize * x,
+              cellSize / 6
+            )
+          }
+          for (let x = cols / 2; x > 0; x--) {
+            drawTextWithShadow(
+              'c' + toSubscript(x),
+              cellSize / 4,
+              (cols + spacingCells - 1) * cellSize + cellSize / 2 + cellSize * x,
+              cellSize / 6
+            )
+          }
         }
       }
       for (let x = 0; x < cols; x++) {
