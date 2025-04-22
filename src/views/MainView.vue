@@ -1172,8 +1172,9 @@ onBeforeMount(async () => {
       const parentElement = document.getElementById('vue-canvas')
       const parentWidth = parentElement?.clientWidth ?? 0
       rows = p5.iterations
-      let spacingCells = p5.drawNeighbors ? Math.ceil(cols / 2) * 2 : 0
-      const parentHeight = 1 + (p5.width / (cols + spacingCells)) * (rows + 0.25)
+      let spacingCells = p5.drawNeighbors ? Math.ceil(cols / 2) * 2 : 1
+      let cellSize = p5.width / (cols + spacingCells)
+      const parentHeight = 1 + cellSize * rows + cellSize / 4
       const canvas = p5.createCanvas(parentWidth, parentHeight)
       await nextTick()
       canvas.parent('vue-canvas')
@@ -1203,7 +1204,8 @@ onBeforeMount(async () => {
       const parentElement = document.getElementById('vue-canvas')
       const parentWidth = parentElement?.clientWidth ?? 0
       let spacingCells = p5.drawNeighbors ? Math.ceil(cols / 2) * 2 : 0
-      const parentHeight = 1 + (p5.width / (cols + spacingCells)) * (rows + 0.25)
+      let cellSize = p5.width / (cols + spacingCells)
+      const parentHeight = 1 + cellSize * rows + cellSize / 4
       p5.resizeCanvas(parentWidth, parentHeight)
       p5.loop()
     }
