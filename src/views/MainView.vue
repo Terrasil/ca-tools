@@ -852,7 +852,6 @@ function generateAutomatonEdges(k: number, r: number, ruleLUT: string): [string,
     }
   }
 
-  console.log(edges)
   return edges
 }
 
