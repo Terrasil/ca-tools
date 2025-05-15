@@ -825,28 +825,34 @@ function getCellStyle(value) {
 }
 
 // Generate data for the graph
-function generateAutomatonEdges(k: number, r: number, ruleLUT: string) {
-  const neighborhoodSize = 2 * r + 1
-  const edges = []
+function generateAutomatonEdges(k: number, r: number, ruleLUT: string): [string, string, number][] {
+  const edges: [string, string, number][] = []
 
-  // Generate all possible neighborhoods
-  const totalCombinations = Math.pow(k, neighborhoodSize)
+  for (let a = 0; a < k; a++) {
+    for (let b = 0; b < k; b++) {
+      for (let c = 0; c < k; c++) {
+        const ab = `${a}${b}`
+        const bc = `${b}${c}`
 
-  for (let i = 0; i < totalCombinations; i++) {
-    // Convert index to neighborhood (binary string or base-k string)
-    const neighborhood = i.toString(k).padStart(neighborhoodSize, '0')
+        // Indeks normalnie (big-endian): abc
+        const index = (a << 2) | (b << 1) | c
 
-    // Get the rule output (the next state)
-    const nextState = ruleLUT[i]
+        // Twoje LUT jest zapisane odwrotnie, więc odwracamy
+        const reversedIndex = Math.pow(k, 3) - 1 - index
 
-    // Generate edges based on the neighborhood
-    const startState = neighborhood.slice(0, -1) // xy (first part)
-    const endState = neighborhood.slice(1) // yz (second part)
+        const ruleChar = ruleLUT[reversedIndex]
+        const ruleValue = parseInt(ruleChar, k)
 
-    // Push the edge: ["xy", "yz", output]
-    edges.push([startState, endState, parseInt(nextState)])
+        if (isNaN(ruleValue)) {
+          throw new Error(`Invalid rule value '${ruleChar}' at index ${reversedIndex}`)
+        }
+
+        edges.push([ab, bc, ruleValue])
+      }
+    }
   }
 
+  console.log(edges)
   return edges
 }
 
@@ -921,16 +927,15 @@ const downloadLUT = async () => {
   }
 }
 
-// Function to generate DOT graph
-function generateCircularLayout(edges: any[]) {
-  const nodes = new Set()
+function generateCircularLayout(edges: [string, string, number][]): string {
+  const nodes = new Set<string>()
   let dotOutput = 'digraph finite_state_machine {\n'
   dotOutput += '\tlayout=fdp;\n'
   dotOutput += '\tnode [shape = circle, fixedsize=true];\n\n'
 
-  edges.forEach((edge: unknown[]) => {
-    nodes.add(edge[0])
-    nodes.add(edge[1])
+  edges.forEach(([from, to]) => {
+    nodes.add(from)
+    nodes.add(to)
   })
 
   const nodeArray = Array.from(nodes)
@@ -945,11 +950,8 @@ function generateCircularLayout(edges: any[]) {
 
   dotOutput += '\n'
 
-  edges.forEach((edge: any[]) => {
-    const startNode = edge[0]
-    const endNode = edge[1]
-    const label = edge[2]
-    dotOutput += `\t"${startNode}" -> "${endNode}" [label = "${label}"];\n`
+  edges.forEach(([from, to, label]) => {
+    dotOutput += `\t"${from}" -> "${to}" [label = "${label}"];\n`
   })
 
   dotOutput += '}'
