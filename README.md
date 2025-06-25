@@ -35,8 +35,6 @@ Aplikacja została napisana w:
 - Eksport wizualizacji do pliku graficznego;
 - Analiza i prezentacja właściwości badanego automatu.
 
-Obrazki interfejsu aplikacji znajdują się w katalogu `/img`.
-
 ## Uruchomienie i budowa projektu
 
 ### Instalacja zależności
