@@ -1,59 +1,58 @@
-# cellular-automata-tools
+# Cellular Automata Tools
 
-Narzędzia do analizy własności k-arnych automatów komórkowych takich jak, zachowywanie sumy stanów (ang. Number Conserving), owracalność NCCA oraz cykliczność/okresowość przestrzenno czasowa.
+## Autor
 
-#### NCCA 
+Patryk Morawski  
+Praca magisterska — 2025  
+Aplikacja webowa stworzona na potrzeby analizy wybranych klas jednowymiarowych automatów komórkowych (m.in. NCCA, odwracalność, cykliczność).
 
-Wykorzytsanie alkorytmu do weryfikacji non-uniform NCCA na potrzeby ENCCA.
+## Opis projektu
 
-#### Reversibility
+Aplikacja umożliwia:
 
-Badanie odwracalności automatu komórkowego z jednoczesnym podaniem odwrotnego CA.
+- wizualizację działania automatów komórkowych w czasie rzeczywistym (z użyciem biblioteki `p5.js`);
+- analizę wybranych własności automatów:
+  - zachowywanie sumy stanów (Number-Conserving Cellular Automata, NCCA),
+  - odwracalność — wraz z generowaniem reguły odwrotnej,
+  - cykliczność przestrzenno-czasową — detekcja powtarzalnych wzorców;
+- generowanie grafów de Bruijna (`Viz.js` / `Graphviz`);
+- pracę w pełni po stronie klienta — bez backendu serwerowego.
 
-#### Cyclic / Periodic
+Aplikacja została napisana w:
 
-Wykrywanie czyklicznhych struktur w przestrzeni automatu oraz w przejściach
+- **JavaScript** i **TypeScript**
+- z użyciem frameworka **Vue.js**  
+  Całość działa w przeglądarce — bez instalacji dodatkowego oprogramowania.
 
-#### Funkcjonalności
-- Zmiana długości taśmy
-- Zmiana ilośc stanów
-- Zmiana ilośc symulowanch iteracji
-- Zmiana typu sąsiedztwa (periodyczne, odbijające i pochłaniające)
-- Import automatu z kodu LUT i z pliku tekstowego (również z stanem początkowym taśmy)
-- Eksport automatu do kodu LUT i do pliku tekstowego (również z stanem początkowym taśmy)
-- Obsługa języka polskiego i angielskiego
-- Opcje:
-  - Wyświetlanie granic taśmy
-  - Wyświtlanie granicy taśmy z gradientem (fadeout)
-- Ustawianie zasady automatu dla całej taśmy
-- Ustawienie zasady dla poszczególnych komórek taśmy
-- Losowanie zasad komórek taśmy
-- Ustawienie wartości początkowej dla wszystkich komórek
-- Ustawienie wartości początkowych dla poszczególnych komórek
-- Losowe ustawienie wartości poczatkowej dla komórek
-- Wyświetlanie symulowanych iteracji
-- Wyświetlanie grafu de Burjina
+### Główne funkcje interfejsu:
 
-## Project Setup
+- Edycja parametrów automatu (liczba stanów, długość taśmy, liczba iteracji);
+- Wybór rodzaju sąsiedztwa (periodyczne, odbijające, pochłaniające);
+- Import i eksport konfiguracji z/do kodu LUT (z możliwością uwzględnienia stanów początkowych);
+- Wsparcie języka polskiego i angielskiego;
+- Panel konfiguracji reguł i stanów komórek indywidualnie i globalnie;
+- Losowe generowanie reguł/stanu początkowego;
+- Eksport wizualizacji do pliku graficznego;
+- Analiza i prezentacja właściwości badanego automatu.
+
+Obrazki interfejsu aplikacji znajdują się w katalogu `/img`.
+
+## Uruchomienie i budowa projektu
+
+### Instalacja zależności
 
 ```sh
 npm install
 ```
 
-### Compile and Hot-Reload for Development
+### Uruchomienie w trybie developerskim
 
 ```sh
 npm run dev
 ```
 
-### Type-Check, Compile and Minify for Production
+### Budowa wersji produkcyjnej
 
 ```sh
 npm run build
-```
-
-### Lint with [ESLint](https://eslint.org/)
-
-```sh
-npm run lint
 ```
