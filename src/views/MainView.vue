@@ -429,6 +429,7 @@
 
 <script setup lang="ts">
 import { ref, onBeforeMount, watch, toRaw, nextTick } from 'vue'
+import type { InputNumberInputEvent } from 'primevue/inputnumber'
 import { useI18n } from 'vue-i18n'
 import type { FileUploadSelectEvent } from 'primevue/fileupload'
 import InputNumber from 'primevue/inputnumber'
@@ -472,23 +473,13 @@ const startValueInputs = ref<{ [key: number]: number }>({})
 const importLUTtext = ref<string>('')
 const exportLUTtext = ref<string>('')
 const validLUT = ref(false)
-const parsedLUT = ref<{
-  states?: string
-  rules?: Array<string>
-  k?: number
-}>({
+const parsedLUT = ref<{ states?: string; rules?: Array<string>; k?: number }>({
   states: undefined,
   rules: undefined,
   k: undefined
 })
-type Options = {
-  showNeighbours: boolean
-  gradientNeighbours: boolean
-}
-const options = ref<Options>({
-  showNeighbours: true,
-  gradientNeighbours: true
-})
+type Options = { showNeighbours: boolean; gradientNeighbours: boolean }
+const options = ref<Options>({ showNeighbours: true, gradientNeighbours: true })
 
 const visibleOptionDialog = ref(false)
 const toggleOptionDialog = () => (visibleOptionDialog.value = true)
@@ -606,13 +597,13 @@ const calculateCyclic = async (newStartValueInputs: { [key: number]: number } | 
 const randomAllRule = () => {
   const randomRule = Math.floor(Math.random() * (calculatePossibleAutomata(statesValue.value) + 1))
   allRule.value = randomRule
-  changeAllRules({ value: randomRule })
+  changeAllRules({ value: randomRule } as InputNumberInputEvent)
 }
 
 const randomAllState = () => {
   const randomState = Math.floor(Math.random() * statesValue.value)
   allState.value = randomState
-  changeAllStates({ value: randomState })
+  changeAllStates({ value: randomState } as InputNumberInputEvent)
 }
 
 const randomRules = () => {
@@ -631,13 +622,13 @@ const randomStates = () => {
 
 let p5Instance: p5 | null = null
 
-const onValueChanged = (event: { value: number }) => {
+const onValueChanged = (event: InputNumberInputEvent) => {
   for (
     let i = 0;
     i < Math.max(numberValue.value, Object.keys(startValueInputs.value).length);
     i++
   ) {
-    if (i >= event.value) {
+    if (i >= (event.value as number)) {
       delete startValueInputs.value[i]
       delete ruleInputs.value[i]
       continue
@@ -654,15 +645,15 @@ function calculatePossibleAutomata(states: number) {
   return possibleAutomata - 1
 }
 
-const changeAllRules = (event: { value: number }) => {
+const changeAllRules = (event: InputNumberInputEvent) => {
   for (let i = 0; i < numberValue.value; i++) {
-    ruleInputs.value[i] = event.value
+    ruleInputs.value[i] = event.value as number
   }
 }
 
-const changeAllStates = (event: { value: number }) => {
+const changeAllStates = (event: InputNumberInputEvent) => {
   for (let i = 0; i < numberValue.value; i++) {
-    startValueInputs.value[i] = event.value
+    startValueInputs.value[i] = event.value as number
   }
 }
 
@@ -678,7 +669,7 @@ function setParsedLUT() {
   }
   if (data.rules.length === 1) {
     allRule.value = parseInt(data.rules[0], data.k)
-    changeAllRules({ value: parseInt(data.rules[0], data.k) })
+    changeAllRules({ value: parseInt(data.rules[0], data.k) } as InputNumberInputEvent)
   } else {
     for (let i = 0; i < data.rules.length; i++) {
       ruleInputs.value[i] = parseInt(data.rules[i], data.k)
@@ -727,11 +718,7 @@ function parseLUT(lut: string) {
     })
     if ((lut.match(/\|/g) || []).length > 0 && (lut.match(/\|/g) || []).length < states.length - 1)
       validLUT.value = false
-    parsedLUT.value = {
-      states,
-      rules,
-      k
-    }
+    parsedLUT.value = { states, rules, k }
   } else {
     const rules = lut?.split('|')
     let k = 0
@@ -740,18 +727,10 @@ function parseLUT(lut: string) {
       else k = validateLUT(value).states ?? 0
     })
     const states = undefined
-    parsedLUT.value = {
-      states,
-      rules,
-      k
-    }
+    parsedLUT.value = { states, rules, k }
   }
   if (!validLUT.value) {
-    parsedLUT.value = {
-      states: undefined,
-      rules: undefined,
-      k: undefined
-    }
+    parsedLUT.value = { states: undefined, rules: undefined, k: undefined }
   }
 }
 
@@ -783,11 +762,7 @@ function validateLUT(lut: string) {
   })
   // Jeśli walidacja jest poprawna, zwracamy dane
   if (isValid) {
-    return {
-      isValid: r > 0,
-      states: s,
-      radius: r
-    }
+    return { isValid: r > 0, states: s, radius: r }
   } else {
     return { isValid: false, states: null, radius: null }
   }
@@ -807,7 +782,7 @@ function generateLUT(rule: number, states: number, neighbours: number) {
   return lut
 }
 
-function getCellStyle(value) {
+function getCellStyle(value: any) {
   const maxValue = statesValue.value - 1
   const grayScale = Math.floor((value / maxValue) * 255)
   const backgroundColor = `rgb(${255 - grayScale}, ${255 - grayScale}, ${255 - grayScale})`
@@ -900,14 +875,8 @@ const downloadLUT = async () => {
     const options = {
       suggestedName: 'lut.ca',
       types: [
-        {
-          description: 'Cellural Automata File',
-          accept: { 'text/plain': ['.ca'] }
-        },
-        {
-          description: 'Text Files',
-          accept: { 'text/plain': ['.txt'] }
-        }
+        { description: 'Cellural Automata File', accept: { 'text/plain': ['.ca'] } },
+        { description: 'Text Files', accept: { 'text/plain': ['.txt'] } }
       ]
     }
 
@@ -995,7 +964,7 @@ onBeforeMount(async () => {
       p5.drawingContext.fillRect(x, y, w, h)
       p5.drawingContext.fillStyle = saveFillStyle
     }
-    function drawTextWithShadow(txt, textSize, x, y) {
+    function drawTextWithShadow(txt: any, textSize: any, x: any, y: any) {
       p5.textSize(textSize)
       p5.stroke(255)
       p5.strokeWeight(textSize / 8)
@@ -1005,7 +974,7 @@ onBeforeMount(async () => {
       p5.noStroke()
     }
     const subscriptDigits = ['₀', '₁', '₂', '₃', '₄', '₅', '₆', '₇', '₈', '₉']
-    function toSubscript(num) {
+    function toSubscript(num: any) {
       return String(num)
         .split('')
         .map((d) => subscriptDigits[parseInt(d)])
